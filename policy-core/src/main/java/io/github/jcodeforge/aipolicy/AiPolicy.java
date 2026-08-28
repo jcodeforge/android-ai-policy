@@ -37,6 +37,15 @@ public final class AiPolicy {
             Objects.requireNonNull(capability, "capability must not be null");
             Objects.requireNonNull(rule, "rule must not be null");
 
+            if (capability.trim().isEmpty()) {
+                throw new IllegalArgumentException("capability must not be blank");
+            }
+
+            if (rules.containsKey(capability)) {
+                throw new IllegalArgumentException("A policy rule already exists for capability: "
+                        + capability);
+            }
+
             rules.put(capability, rule);
 
             return this;

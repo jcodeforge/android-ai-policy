@@ -84,4 +84,45 @@ public class AiPolicyTest {
     public void ruleMustNotBeNull() {
         AiPolicy.builder().addRule("customer.read", null);
     }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void blankCapabilityMustNotBeAllowed() {
+        AiPolicy.builder().addRule("   ", new PolicyRule(Decision.ALLOW, null));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void duplicateCapabilityMustNotBeAllowed() {
+        AiPolicy.builder()
+                .addRule("customer.read", new PolicyRule(Decision.ALLOW, null))
+                .addRule("customer.read", new PolicyRule(Decision.DENY, "Not allowed"));
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void nullCapabilityMustNotBeAllowed() {
+        AiPolicy.builder().addRule(null, new PolicyRule(Decision.ALLOW, null));
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void nullRuleMustNotBeAllowed() {
+        AiPolicy.builder().addRule("customer.read", null);
+    }
+
+    @Test
+    public void policyIsImmutableAfterBuild() {
+        AiPolicy.Builder builder = AiPolicy.builder();
+
+        builder.addRule("customer.read", new PolicyRule(Decision.ALLOW, null));
+
+        AiPolicy policy = builder.build();
+
+        builder.addRule("customer.delete", new PolicyRule(Decision.DENY,
+                "Not permitted"));
+
+        ActionContext context = new ActionContext("customer.delete",
+                "com.example.agent", false);
+
+        PolicyRule result = policy.evaluate(context);
+
+        assertEquals(Decision.DENY, result.getDecision());
+    }
 }
