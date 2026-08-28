@@ -23,4 +23,4 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "Android(AI Policy"
-include(":app")
+include(":policy-core")
