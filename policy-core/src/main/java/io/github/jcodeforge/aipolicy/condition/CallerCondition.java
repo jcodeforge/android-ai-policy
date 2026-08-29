@@ -18,8 +18,6 @@ public final class CallerCondition implements PolicyCondition {
 
     @Override
     public boolean matches(ActionContext context) {
-        Objects.requireNonNull(context, "context must not be null");
-
         return expectedCaller.equals(context.getCaller());
     }
 
