@@ -2,12 +2,32 @@ package io.github.jcodeforge.aipolicy;
 
 import java.util.Objects;
 
+/**
+ * Describes the context in which an action is requested.
+ *
+ * <p>An action context is supplied to {@link AiPolicy} during policy
+ * evaluation and provides the information that policy conditions can
+ * inspect.</p>
+ *
+ * <p>An {@code ActionContext} is immutable after construction.</p>
+ */
 public final class ActionContext {
 
     private final String capability;
     private final String caller;
     private final boolean userInitiated;
 
+    /**
+     * Creates an action context.
+     *
+     * @param capability the capability being requested
+     * @param caller the caller requesting the capability
+     * @param userInitiated whether the action was explicitly initiated by the user
+     * @throws NullPointerException if {@code capability} or {@code caller}
+     *                              is {@code null}
+     * @throws IllegalArgumentException if {@code capability} or {@code caller}
+     *                                  is blank
+     */
     public ActionContext(String capability, String caller, boolean userInitiated) {
         this.capability = Objects.requireNonNull(capability, "capability must not be null");
         this.caller = Objects.requireNonNull(caller, "caller must not be null");
