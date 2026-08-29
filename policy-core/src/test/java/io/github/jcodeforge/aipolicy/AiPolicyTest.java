@@ -24,7 +24,7 @@ public class AiPolicyTest {
 
         PolicyResult result = policy.evaluate(context);
 
-        assertEquals(Decision.ALLOW, result.getDecision());
+        assertTrue(result.isAllowed());
         assertNull(result.getReason());
     }
 
@@ -40,7 +40,7 @@ public class AiPolicyTest {
 
         PolicyResult result = policy.evaluate(context);
 
-        assertEquals(Decision.DENY, result.getDecision());
+        assertTrue(result.isDenied());
         assertEquals("Export not permitted", result.getReason());
     }
 
@@ -56,7 +56,7 @@ public class AiPolicyTest {
 
         PolicyResult result = policy.evaluate(context);
 
-        assertEquals(Decision.REQUIRE_CONFIRMATION, result.getDecision());
+        assertTrue(result.requiresConfirmation());
         assertEquals("Confirmation required", result.getReason());
     }
 
@@ -71,7 +71,7 @@ public class AiPolicyTest {
 
         PolicyResult result = policy.evaluate(context);
 
-        assertEquals(Decision.DENY, result.getDecision());
+        assertTrue(result.isDenied());
         assertNotNull(result.getReason());
     }
 
@@ -123,7 +123,7 @@ public class AiPolicyTest {
 
         PolicyResult result = policy.evaluate(context);
 
-        assertEquals(Decision.DENY, result.getDecision());
+        assertTrue(result.isDenied());
     }
 
     @Test
@@ -140,7 +140,7 @@ public class AiPolicyTest {
 
         PolicyResult result = policy.evaluate(context);
 
-        assertEquals(Decision.REQUIRE_CONFIRMATION, result.getDecision());
+        assertTrue(result.requiresConfirmation());
         assertEquals("Confirmation required", result.getReason());
     }
 
@@ -158,7 +158,7 @@ public class AiPolicyTest {
 
         PolicyResult result = policy.evaluate(context);
 
-        assertEquals(Decision.DENY, result.getDecision());
+        assertTrue(result.isDenied());
         assertEquals("No policy condition was satisfied", result.getReason());
     }
 
@@ -175,7 +175,7 @@ public class AiPolicyTest {
 
         PolicyResult result = policy.evaluate(context);
 
-        assertEquals(Decision.ALLOW, result.getDecision());
+        assertTrue(result.isAllowed());
     }
 
     @Test
@@ -196,7 +196,7 @@ public class AiPolicyTest {
 
         PolicyResult result = policy.evaluate(context);
 
-        assertEquals(Decision.ALLOW, result.getDecision());
+        assertTrue(result.isAllowed());
     }
 
     @Test
@@ -217,7 +217,7 @@ public class AiPolicyTest {
 
         PolicyResult result = policy.evaluate(context);
 
-        assertEquals(Decision.DENY, result.getDecision());
+        assertTrue(result.isDenied());
     }
 
     @Test
@@ -238,7 +238,7 @@ public class AiPolicyTest {
 
         PolicyResult result = policy.evaluate(context);
 
-        assertEquals(Decision.ALLOW, result.getDecision());
+        assertTrue(result.isAllowed());
     }
 
     @Test
@@ -258,7 +258,7 @@ public class AiPolicyTest {
 
         PolicyResult result = policy.evaluate(context);
 
-        assertEquals(Decision.ALLOW, result.getDecision());
+        assertTrue(result.isAllowed());
     }
 
     @Test
@@ -279,7 +279,7 @@ public class AiPolicyTest {
 
         PolicyResult result = policy.evaluate(context);
 
-        assertEquals(Decision.REQUIRE_CONFIRMATION, result.getDecision());
+        assertTrue(result.requiresConfirmation());
         assertEquals("Confirmation required", result.getReason());
     }
 
@@ -300,7 +300,7 @@ public class AiPolicyTest {
 
         PolicyResult result = policy.evaluate(context);
 
-        assertEquals(Decision.ALLOW, result.getDecision());
+        assertTrue(result.isAllowed());
         assertNull(result.getReason());
     }
 
@@ -322,7 +322,7 @@ public class AiPolicyTest {
 
         PolicyResult result = policy.evaluate(context);
 
-        assertEquals(Decision.DENY, result.getDecision());
+        assertTrue(result.isDenied());
         assertEquals("No policy condition was satisfied", result.getReason());
     }
 }

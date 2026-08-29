@@ -21,8 +21,16 @@ public final class PolicyResult {
         this.reason = reason;
     }
 
-    public Decision getDecision() {
-        return decision;
+    public boolean isAllowed() {
+        return decision == Decision.ALLOW;
+    }
+
+    public boolean isDenied() {
+        return decision == Decision.DENY;
+    }
+
+    public boolean requiresConfirmation() {
+        return decision == Decision.REQUIRE_CONFIRMATION;
     }
 
     public String getReason() {
