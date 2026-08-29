@@ -16,6 +16,7 @@ public final class ActionContext {
     private final String capability;
     private final String caller;
     private final boolean userInitiated;
+    private final ApplicationState applicationState;
 
     /**
      * Creates an action context.
@@ -23,14 +24,18 @@ public final class ActionContext {
      * @param capability the capability being requested
      * @param caller the caller requesting the capability
      * @param userInitiated whether the action was explicitly initiated by the user
-     * @throws NullPointerException if {@code capability} or {@code caller}
-     *                              is {@code null}
+     * @param applicationState the application state when the action was requested
+     * @throws NullPointerException if {@code capability}, {@code caller},
+     *                              or {@code applicationState} is {@code null}
      * @throws IllegalArgumentException if {@code capability} or {@code caller}
      *                                  is blank
      */
-    public ActionContext(String capability, String caller, boolean userInitiated) {
+    public ActionContext(String capability, String caller, boolean userInitiated,
+                         ApplicationState applicationState) {
         this.capability = Objects.requireNonNull(capability, "capability must not be null");
         this.caller = Objects.requireNonNull(caller, "caller must not be null");
+        this.applicationState = Objects.requireNonNull(applicationState,
+                "applicationState must not be null");
 
         if (capability.trim().isEmpty()) {
             throw new IllegalArgumentException("capability must not be blank");
@@ -43,6 +48,10 @@ public final class ActionContext {
         this.userInitiated = userInitiated;
     }
 
+    public ActionContext(String capability, String caller, boolean userInitiated) {
+        this(capability, caller, userInitiated, ApplicationState.FOREGROUND);
+    }
+
     public String getCapability() {
         return capability;
     }
@@ -53,5 +62,9 @@ public final class ActionContext {
 
     public boolean isUserInitiated() {
         return userInitiated;
+    }
+
+    public ApplicationState getApplicationState() {
+        return applicationState;
     }
 }
