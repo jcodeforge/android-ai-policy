@@ -51,7 +51,7 @@ ActionContext context = new ActionContext(
 // Evaluate the action
 PolicyResult result = policy.evaluate(context);
 
-if (result.getDecision() == Decision.ALLOW) {
+if (result.isAllowed()) {
     // Execute action
 }
 
