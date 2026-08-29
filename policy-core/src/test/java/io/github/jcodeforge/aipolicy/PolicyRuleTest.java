@@ -1,8 +1,8 @@
 package io.github.jcodeforge.aipolicy;
 
 import org.junit.Test;
-
 import static org.junit.Assert.*;
+import io.github.jcodeforge.aipolicy.condition.UserInitiatedCondition;
 
 public class PolicyRuleTest {
 
@@ -52,5 +52,28 @@ public class PolicyRuleTest {
     @Test(expected = IllegalArgumentException.class)
     public void confirmationRequiresReason() {
         new PolicyRule(Decision.REQUIRE_CONFIRMATION, null);
+    }
+
+    @Test
+    public void ruleMatchesWhenConditionMatches() {
+        PolicyRule rule = new PolicyRule(Decision.REQUIRE_CONFIRMATION,
+                "Confirmation required", new UserInitiatedCondition());
+
+        ActionContext context = new ActionContext("customer.delete",
+                "com.example.agent", true
+        );
+
+        assertTrue(rule.matches(context));
+    }
+
+    @Test
+    public void ruleDoesNotMatchWhenConditionDoesNotMatch() {
+        PolicyRule rule = new PolicyRule(Decision.REQUIRE_CONFIRMATION, "Confirmation required",
+                new UserInitiatedCondition());
+
+        ActionContext context = new ActionContext("customer.delete",
+                "com.example.agent", false);
+
+        assertFalse(rule.matches(context));
     }
 }

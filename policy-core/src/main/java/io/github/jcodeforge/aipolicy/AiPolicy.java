@@ -1,28 +1,42 @@
 package io.github.jcodeforge.aipolicy;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
 public final class AiPolicy {
 
-    private final Map<String, PolicyRule> rules;
+    private final Map<String, List<PolicyRule>> rules;
 
-    private AiPolicy(Map<String, PolicyRule> rules) {
-        this.rules = Map.copyOf(rules);
+    private AiPolicy(Map<String, List<PolicyRule>> rules) {
+        Map<String, List<PolicyRule>> copiedRules = new HashMap<>();
+
+        for (Map.Entry<String, List<PolicyRule>> entry : rules.entrySet()) {
+            copiedRules.put(entry.getKey(), List.copyOf(entry.getValue()));
+        }
+
+        this.rules = Map.copyOf(copiedRules);
     }
 
-    public PolicyRule evaluate(ActionContext context) {
+    public PolicyResult evaluate(ActionContext context) {
         Objects.requireNonNull(context, "context must not be null");
 
-        PolicyRule rule = rules.get(context.getCapability());
+        List<PolicyRule> capabilityRules = rules.get(context.getCapability());
 
-        if (rule == null) {
-            return new PolicyRule(Decision.DENY, "No policy rule exists for capability: "
+        if (capabilityRules == null) {
+            return new PolicyResult(Decision.DENY, "No policy rule exists for capability: "
                     + context.getCapability());
         }
 
-        return rule;
+        for (PolicyRule rule : capabilityRules) {
+            if (rule.matches(context)) {
+                return new PolicyResult(rule.getDecision(), rule.getReason());
+            }
+        }
+
+        return new PolicyResult(Decision.DENY, "No policy condition was satisfied");
     }
 
     public static Builder builder() {
@@ -31,7 +45,7 @@ public final class AiPolicy {
 
     public static final class Builder {
 
-        private final Map<String, PolicyRule> rules = new HashMap<>();
+        private final Map<String, List<PolicyRule>> rules = new HashMap<>();
 
         public Builder addRule(String capability, PolicyRule rule) {
             Objects.requireNonNull(capability, "capability must not be null");
@@ -41,12 +55,7 @@ public final class AiPolicy {
                 throw new IllegalArgumentException("capability must not be blank");
             }
 
-            if (rules.containsKey(capability)) {
-                throw new IllegalArgumentException("A policy rule already exists for capability: "
-                        + capability);
-            }
-
-            rules.put(capability, rule);
+            rules.computeIfAbsent(capability, key -> new ArrayList<>()).add(rule);
 
             return this;
         }

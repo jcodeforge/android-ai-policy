@@ -1,16 +1,13 @@
 package io.github.jcodeforge.aipolicy;
 
 import java.util.Objects;
-import io.github.jcodeforge.aipolicy.condition.AlwaysCondition;
-import io.github.jcodeforge.aipolicy.condition.PolicyCondition;
 
-public final class PolicyRule {
+public final class PolicyResult {
 
     private final Decision decision;
     private final String reason;
-    private final PolicyCondition condition;
 
-    public PolicyRule(Decision decision, String reason, PolicyCondition condition) {
+    public PolicyResult(Decision decision, String reason) {
         this.decision = Objects.requireNonNull(decision, "decision must not be null");
 
         if (decision == Decision.ALLOW && reason != null) {
@@ -22,11 +19,6 @@ public final class PolicyRule {
         }
 
         this.reason = reason;
-        this.condition = condition;
-    }
-
-    public PolicyRule(Decision decision, String reason) {
-        this(decision, reason, new AlwaysCondition());
     }
 
     public Decision getDecision() {
@@ -35,15 +27,5 @@ public final class PolicyRule {
 
     public String getReason() {
         return reason;
-    }
-
-    public PolicyCondition getCondition() {
-        return condition;
-    }
-
-    public boolean matches(ActionContext context) {
-        Objects.requireNonNull(context, "context must not be null");
-
-        return condition.matches(context);
     }
 }
