@@ -1,69 +1,85 @@
 # Android AI Policy
 
-A policy engine for controlling AI-initiated actions and data access in Android applications.
+A lightweight policy engine for controlling AI-initiated actions in Android applications.
 
 > **Status:** Early development — API and architecture are subject to change.
 
+---
+
 ## Overview
 
-As AI assistants and agents become increasingly capable of interacting with Android applications, applications need a way to control what AI-initiated actions are allowed to do.
+Android AI Policy provides a policy layer between AI-accessible capabilities and application business logic.
 
-Android AI Policy aims to provide a flexible policy layer between AI-accessible application capabilities and application business logic.
+It can answer questions such as:
 
-The library is designed to answer questions such as:
+- Is an action allowed?
+- Is user confirmation required?
+- Who initiated the action?
+- Under which conditions is an action permitted?
+- Why was an action denied?
 
-- Is this action allowed?
-- Does this action require user confirmation?
-- Which capabilities can an AI agent access?
-- Under which conditions can an action be executed?
-- Which application data may be exposed?
-- Why was an action allowed or denied?
+---
 
-The project is designed to complement Android's AI and application capability APIs rather than replace them.
+## Basic Usage
 
-## Example
-
-The intended API will look approximately like:
+Create a policy:
 
 ```java
 AiPolicy policy = AiPolicy.builder()
-        .allow("customer.read")
-        .requireConfirmation("customer.delete")
-        .deny("customer.export")
+        .addRule(
+                "customer.read",
+                new PolicyRule(
+                        Decision.ALLOW,
+                        null
+                )
+        )
+        .addRule(
+                "customer.delete",
+                new PolicyRule(
+                        Decision.REQUIRE_CONFIRMATION,
+                        "User confirmation is required"
+                )
+        )
         .build();
 
-Decision decision = policy.evaluate(
+ActionContext context = new ActionContext(
         "customer.delete",
-        context
+        "com.example.aiagent",
+        true
+);
+
+// Evaluate the action
+PolicyResult result = policy.evaluate(context);
+
+if (result.getDecision() == Decision.ALLOW) {
+    // Execute action
+}
+
+//Conditional Rules
+PolicyRule rule = new PolicyRule(
+        Decision.ALLOW,
+        null,
+        new CallerCondition("com.example.aiagent")
+);
+
+PolicyRule rule = new AndCondition(
+        new CallerCondition("com.example.aiagent"),
+        new UserInitiatedCondition()
 );
 ```
 
-## Planned Features
+---
 
-### Policy Core
+## Evaluation Notes
 
-- Policy Core
-- Capability policies
-- Action context
-- Policy decisions
-- Allow rules
-- Deny rules
-- Confirmation requirements
-- Deterministic policy evaluation
-- Immutable API
+Multiple rules can be registered for the same capability.
 
-### Android Integration
+Rules are evaluated in registration order. The first matching rule wins.
 
-- Android application context
-- Caller information
-- Application state
-- Android permission information
-- Android-specific policy conditions
+If no rule matches, the result is DENY.
 
-### AI Capability Integration
+---
 
-- AI capability declarations
-- Capability metadata
-- Capability-specific policies
-- AI action authorization
-- Confirmation handling
+## License
+
+Apache License 2.0
