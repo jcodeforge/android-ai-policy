@@ -34,8 +34,6 @@ public final class ActionContext {
                          ApplicationState applicationState) {
         this.capability = Objects.requireNonNull(capability, "capability must not be null");
         this.caller = Objects.requireNonNull(caller, "caller must not be null");
-        this.applicationState = Objects.requireNonNull(applicationState,
-                "applicationState must not be null");
 
         if (capability.trim().isEmpty()) {
             throw new IllegalArgumentException("capability must not be blank");
@@ -46,10 +44,11 @@ public final class ActionContext {
         }
 
         this.userInitiated = userInitiated;
+        this.applicationState = applicationState;
     }
 
     public ActionContext(String capability, String caller, boolean userInitiated) {
-        this(capability, caller, userInitiated, ApplicationState.FOREGROUND);
+        this(capability, caller, userInitiated, null);
     }
 
     public String getCapability() {
