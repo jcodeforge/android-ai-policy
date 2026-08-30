@@ -19,3 +19,4 @@ plugins {
 rootProject.name = "Android AI Policy"
 
 include(":policy-core")
+include(":policy-android")
