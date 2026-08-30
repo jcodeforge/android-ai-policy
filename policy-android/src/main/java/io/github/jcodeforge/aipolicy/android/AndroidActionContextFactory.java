@@ -21,12 +21,11 @@ public final class AndroidActionContextFactory {
     }
 
     public ActionContext create(String capability, boolean userInitiated) {
-        AndroidCaller caller = callerProvider.getCaller();
+        AndroidCaller caller = Objects.requireNonNull(callerProvider.getCaller(),
+                "caller must not be null");
 
-        CallerIdentity callerIdentity = new CallerIdentity(
-                caller.getPackageName(),
-                toCallerType(caller.getType())
-        );
+        CallerIdentity callerIdentity = new CallerIdentity(caller.getPackageName(),
+                toCallerType(caller.getType()));
 
         return new ActionContext(capability, callerIdentity, userInitiated,
                 stateProvider.getApplicationState());
