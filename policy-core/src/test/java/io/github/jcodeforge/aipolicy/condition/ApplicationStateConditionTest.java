@@ -2,18 +2,28 @@ package io.github.jcodeforge.aipolicy.condition;
 
 import io.github.jcodeforge.aipolicy.ActionContext;
 import io.github.jcodeforge.aipolicy.ApplicationState;
+import io.github.jcodeforge.aipolicy.CallerIdentity;
+import io.github.jcodeforge.aipolicy.CallerType;
 import org.junit.Test;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class ApplicationStateConditionTest {
 
+    private final CallerIdentity agentCaller = new CallerIdentity("com.example.agent",
+            CallerType.EXTERNAL
+    );
+
     @Test
     public void foregroundConditionMatchesForegroundContext() {
         ApplicationStateCondition condition = new ApplicationStateCondition(ApplicationState.FOREGROUND);
 
-        ActionContext context = new ActionContext("customer.read", "com.example.agent",
-                true, ApplicationState.FOREGROUND);
+        ActionContext context = new ActionContext(
+                "customer.read",
+                agentCaller,
+                true,
+                ApplicationState.FOREGROUND
+        );
 
         assertTrue(condition.matches(context));
     }
@@ -22,8 +32,12 @@ public class ApplicationStateConditionTest {
     public void foregroundConditionDoesNotMatchBackgroundContext() {
         ApplicationStateCondition condition = new ApplicationStateCondition(ApplicationState.FOREGROUND);
 
-        ActionContext context = new ActionContext("customer.read", "com.example.agent",
-                true, ApplicationState.BACKGROUND);
+        ActionContext context = new ActionContext(
+                "customer.read",
+                agentCaller,
+                true,
+                ApplicationState.BACKGROUND
+        );
 
         assertFalse(condition.matches(context));
     }
@@ -32,8 +46,12 @@ public class ApplicationStateConditionTest {
     public void backgroundConditionMatchesBackgroundContext() {
         ApplicationStateCondition condition = new ApplicationStateCondition(ApplicationState.BACKGROUND);
 
-        ActionContext context = new ActionContext("customer.read", "com.example.agent",
-                false, ApplicationState.BACKGROUND);
+        ActionContext context = new ActionContext(
+                "customer.read",
+                agentCaller,
+                false,
+                ApplicationState.BACKGROUND
+        );
 
         assertTrue(condition.matches(context));
     }
@@ -42,8 +60,12 @@ public class ApplicationStateConditionTest {
     public void backgroundConditionDoesNotMatchForegroundContext() {
         ApplicationStateCondition condition = new ApplicationStateCondition(ApplicationState.BACKGROUND);
 
-        ActionContext context = new ActionContext("customer.read", "com.example.agent",
-                false, ApplicationState.FOREGROUND);
+        ActionContext context = new ActionContext(
+                "customer.read",
+                agentCaller,
+                false,
+                ApplicationState.FOREGROUND
+        );
 
         assertFalse(condition.matches(context));
     }

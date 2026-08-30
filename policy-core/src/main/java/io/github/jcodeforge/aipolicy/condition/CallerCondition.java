@@ -18,7 +18,7 @@ public final class CallerCondition implements PolicyCondition {
 
     @Override
     public boolean matches(ActionContext context) {
-        return expectedCaller.equals(context.getCaller());
+        return expectedCaller.equals(context.getCallerIdentity().getId());
     }
 
     public String getExpectedCaller() {

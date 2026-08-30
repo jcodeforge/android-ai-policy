@@ -1,9 +1,6 @@
 package io.github.jcodeforge.aipolicy;
 
 import org.junit.Test;
-
-import static org.junit.Assert.*;
-
 import io.github.jcodeforge.aipolicy.condition.AlwaysCondition;
 import io.github.jcodeforge.aipolicy.condition.AndCondition;
 import io.github.jcodeforge.aipolicy.condition.CallerCondition;
@@ -11,15 +8,26 @@ import io.github.jcodeforge.aipolicy.condition.NotCondition;
 import io.github.jcodeforge.aipolicy.condition.OrCondition;
 import io.github.jcodeforge.aipolicy.condition.UserInitiatedCondition;
 
+import static org.junit.Assert.*;
+
 public class AiPolicyTest {
+
+    private final CallerIdentity agentCaller =
+            new CallerIdentity("com.example.agent", CallerType.EXTERNAL);
+
+    private final CallerIdentity otherCaller =
+            new CallerIdentity("com.example.other", CallerType.EXTERNAL);
 
     @Test
     public void allowedCapabilityReturnsAllow() {
         AiPolicy policy = AiPolicy.builder()
-                .addRule("customer.read", new PolicyRule(Decision.ALLOW, null))
+                .addRule(
+                        "customer.read",
+                        new PolicyRule(Decision.ALLOW, null)
+                )
                 .build();
 
-        ActionContext context = new ActionContext("customer.read", "com.example.agent",
+        ActionContext context = new ActionContext("customer.read", agentCaller,
                 true);
 
         PolicyResult result = policy.evaluate(context);
@@ -31,11 +39,13 @@ public class AiPolicyTest {
     @Test
     public void deniedCapabilityReturnsDeny() {
         AiPolicy policy = AiPolicy.builder()
-                .addRule("customer.export",
-                        new PolicyRule(Decision.DENY, "Export not permitted"))
+                .addRule(
+                        "customer.export",
+                        new PolicyRule(Decision.DENY, "Export not permitted")
+                )
                 .build();
 
-        ActionContext context = new ActionContext("customer.export", "com.example.agent",
+        ActionContext context = new ActionContext("customer.export", agentCaller,
                 false);
 
         PolicyResult result = policy.evaluate(context);
@@ -47,11 +57,13 @@ public class AiPolicyTest {
     @Test
     public void confirmationCapabilityReturnsRequireConfirmation() {
         AiPolicy policy = AiPolicy.builder()
-                .addRule("customer.delete", new PolicyRule(Decision.REQUIRE_CONFIRMATION,
-                        "Confirmation required"))
+                .addRule(
+                        "customer.delete",
+                        new PolicyRule(Decision.REQUIRE_CONFIRMATION, "Confirmation required")
+                )
                 .build();
 
-        ActionContext context = new ActionContext("customer.delete", "com.example.agent",
+        ActionContext context = new ActionContext("customer.delete", agentCaller,
                 false);
 
         PolicyResult result = policy.evaluate(context);
@@ -63,10 +75,13 @@ public class AiPolicyTest {
     @Test
     public void unknownCapabilityIsDenied() {
         AiPolicy policy = AiPolicy.builder()
-                .addRule("customer.read", new PolicyRule(Decision.ALLOW, null))
+                .addRule(
+                        "customer.read",
+                        new PolicyRule(Decision.ALLOW, null)
+                )
                 .build();
 
-        ActionContext context = new ActionContext("customer.delete", "com.example.agent",
+        ActionContext context = new ActionContext("customer.delete", agentCaller,
                 false);
 
         PolicyResult result = policy.evaluate(context);
@@ -115,11 +130,12 @@ public class AiPolicyTest {
 
         AiPolicy policy = builder.build();
 
-        builder.addRule("customer.delete", new PolicyRule(Decision.DENY,
-                "Not permitted"));
+        builder.addRule(
+                "customer.delete",
+                new PolicyRule(Decision.DENY, "Not permitted"));
 
-        ActionContext context = new ActionContext("customer.delete",
-                "com.example.agent", false);
+        ActionContext context = new ActionContext("customer.delete", otherCaller,
+                false);
 
         PolicyResult result = policy.evaluate(context);
 
@@ -128,20 +144,21 @@ public class AiPolicyTest {
 
     @Test
     public void matchingConditionReturnsConfiguredRule() {
-        PolicyRule rule = new PolicyRule(Decision.REQUIRE_CONFIRMATION,
-                "Confirmation required", new UserInitiatedCondition());
+        PolicyRule rule = new PolicyRule(Decision.REQUIRE_CONFIRMATION, "Confirmation required",
+                new UserInitiatedCondition());
 
         AiPolicy policy = AiPolicy.builder()
                 .addRule("customer.delete", rule)
                 .build();
 
-        ActionContext context = new ActionContext("customer.delete",
-                "com.example.agent", true);
+        ActionContext context = new ActionContext("customer.delete", agentCaller,
+                true);
 
         PolicyResult result = policy.evaluate(context);
 
         assertTrue(result.requiresConfirmation());
-        assertEquals("Confirmation required", result.getReason());
+        assertEquals("Confirmation required", result.getReason()
+        );
     }
 
     @Test
@@ -153,8 +170,7 @@ public class AiPolicyTest {
                 .addRule("customer.delete", rule)
                 .build();
 
-        ActionContext context = new ActionContext("customer.delete", "com.example.agent",
-                false);
+        ActionContext context = new ActionContext("customer.delete", agentCaller, false);
 
         PolicyResult result = policy.evaluate(context);
 
@@ -170,8 +186,7 @@ public class AiPolicyTest {
                 .addRule("customer.read", rule)
                 .build();
 
-        ActionContext context = new ActionContext("customer.read", "com.example.agent",
-                false);
+        ActionContext context = new ActionContext("customer.read", agentCaller, false);
 
         PolicyResult result = policy.evaluate(context);
 
@@ -183,16 +198,17 @@ public class AiPolicyTest {
         PolicyRule rule = new PolicyRule(
                 Decision.ALLOW,
                 null,
-                new AndCondition(new CallerCondition("com.example.agent"),
-                        new UserInitiatedCondition())
+                new AndCondition(
+                        new CallerCondition("com.example.agent"),
+                        new UserInitiatedCondition()
+                )
         );
 
         AiPolicy policy = AiPolicy.builder()
                 .addRule("customer.read", rule)
                 .build();
 
-        ActionContext context = new ActionContext("customer.read", "com.example.agent",
-                true);
+        ActionContext context = new ActionContext("customer.read", agentCaller, true);
 
         PolicyResult result = policy.evaluate(context);
 
@@ -204,16 +220,17 @@ public class AiPolicyTest {
         PolicyRule rule = new PolicyRule(
                 Decision.ALLOW,
                 null,
-                new AndCondition(new CallerCondition("com.example.agent"),
-                        new UserInitiatedCondition())
+                new AndCondition(
+                        new CallerCondition("com.example.agent"),
+                        new UserInitiatedCondition()
+                )
         );
 
         AiPolicy policy = AiPolicy.builder()
                 .addRule("customer.read", rule)
                 .build();
 
-        ActionContext context = new ActionContext("customer.read", "com.example.agent",
-                false);
+        ActionContext context = new ActionContext("customer.read", agentCaller, false);
 
         PolicyResult result = policy.evaluate(context);
 
@@ -225,16 +242,17 @@ public class AiPolicyTest {
         PolicyRule rule = new PolicyRule(
                 Decision.ALLOW,
                 null,
-                new OrCondition(new CallerCondition("com.example.agent"),
-                        new UserInitiatedCondition())
+                new OrCondition(
+                        new CallerCondition("com.example.agent"),
+                        new UserInitiatedCondition()
+                )
         );
 
         AiPolicy policy = AiPolicy.builder()
                 .addRule("customer.read", rule)
                 .build();
 
-        ActionContext context = new ActionContext("customer.read", "com.example.other",
-                true);
+        ActionContext context = new ActionContext("customer.read", otherCaller, true);
 
         PolicyResult result = policy.evaluate(context);
 
@@ -253,7 +271,7 @@ public class AiPolicyTest {
                 .addRule("customer.read", rule)
                 .build();
 
-        ActionContext context = new ActionContext("customer.read", "com.example.agent",
+        ActionContext context = new ActionContext("customer.read", agentCaller,
                 false);
 
         PolicyResult result = policy.evaluate(context);
@@ -263,19 +281,28 @@ public class AiPolicyTest {
 
     @Test
     public void nonMatchingRuleFallsBackToNextRule() {
-        PolicyRule conditionalRule = new PolicyRule(Decision.ALLOW, null,
-                new CallerCondition("com.example.trusted"));
+        PolicyRule conditionalRule = new PolicyRule(
+                Decision.ALLOW,
+                null,
+                new CallerCondition("com.example.trusted")
+        );
 
-        PolicyRule fallbackRule = new PolicyRule(Decision.REQUIRE_CONFIRMATION,
-                "Confirmation required", new AlwaysCondition());
+        PolicyRule fallbackRule = new PolicyRule(
+                Decision.REQUIRE_CONFIRMATION,
+                "Confirmation required",
+                new AlwaysCondition()
+        );
 
         AiPolicy policy = AiPolicy.builder()
                 .addRule("customer.delete", conditionalRule)
                 .addRule("customer.delete", fallbackRule)
                 .build();
 
-        ActionContext context = new ActionContext("customer.delete",
-                "com.example.other", false);
+        ActionContext context = new ActionContext(
+                "customer.delete",
+                otherCaller,
+                false
+        );
 
         PolicyResult result = policy.evaluate(context);
 
@@ -286,7 +313,6 @@ public class AiPolicyTest {
     @Test
     public void firstMatchingRuleWins() {
         PolicyRule firstRule = new PolicyRule(Decision.ALLOW, null, new AlwaysCondition());
-
         PolicyRule secondRule = new PolicyRule(Decision.DENY, "Should not be reached",
                 new AlwaysCondition());
 
@@ -295,7 +321,7 @@ public class AiPolicyTest {
                 .addRule("customer.read", secondRule)
                 .build();
 
-        ActionContext context = new ActionContext("customer.read", "com.example.agent",
+        ActionContext context = new ActionContext("customer.read", agentCaller,
                 true);
 
         PolicyResult result = policy.evaluate(context);
@@ -307,17 +333,27 @@ public class AiPolicyTest {
     @Test
     public void deniesWhenNoRuleConditionMatches() {
         AiPolicy policy = AiPolicy.builder()
-                .addRule("customer.delete",
-                        new PolicyRule(Decision.ALLOW, null,
-                                new CallerCondition("com.example.trusted"))
+                .addRule(
+                        "customer.delete",
+                        new PolicyRule(
+                                Decision.ALLOW,
+                                null,
+                                new CallerCondition(
+                                        "com.example.trusted"
+                                )
+                        )
                 )
-                .addRule("customer.delete",
-                       new PolicyRule(Decision.REQUIRE_CONFIRMATION, "Confirmation required",
-                               new UserInitiatedCondition())
+                .addRule(
+                        "customer.delete",
+                        new PolicyRule(
+                                Decision.REQUIRE_CONFIRMATION,
+                                "Confirmation required",
+                                new UserInitiatedCondition()
+                        )
                 )
                 .build();
 
-        ActionContext context = new ActionContext("customer.delete", "com.example.other",
+        ActionContext context = new ActionContext("customer.delete", otherCaller,
                 false);
 
         PolicyResult result = policy.evaluate(context);

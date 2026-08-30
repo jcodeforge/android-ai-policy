@@ -14,7 +14,7 @@ import java.util.Objects;
 public final class ActionContext {
 
     private final String capability;
-    private final String caller;
+    private final CallerIdentity callerIdentity;
     private final boolean userInitiated;
     private final ApplicationState applicationState;
 
@@ -22,40 +22,37 @@ public final class ActionContext {
      * Creates an action context.
      *
      * @param capability the capability being requested
-     * @param caller the caller requesting the capability
+     * @param callerIdentity the caller requesting the capability
      * @param userInitiated whether the action was explicitly initiated by the user
      * @param applicationState the application state when the action was requested
      * @throws NullPointerException if {@code capability}, {@code caller} is {@code null}
      * @throws IllegalArgumentException if {@code capability} or {@code caller}
      *                                  is blank
      */
-    public ActionContext(String capability, String caller, boolean userInitiated,
+    public ActionContext(String capability, CallerIdentity callerIdentity, boolean userInitiated,
                          ApplicationState applicationState) {
         this.capability = Objects.requireNonNull(capability, "capability must not be null");
-        this.caller = Objects.requireNonNull(caller, "caller must not be null");
+        this.callerIdentity = Objects.requireNonNull(callerIdentity,
+                "callerIdentity  must not be null");
 
         if (capability.trim().isEmpty()) {
             throw new IllegalArgumentException("capability must not be blank");
-        }
-
-        if (caller.trim().isEmpty()) {
-            throw new IllegalArgumentException("caller must not be blank");
         }
 
         this.userInitiated = userInitiated;
         this.applicationState = applicationState;
     }
 
-    public ActionContext(String capability, String caller, boolean userInitiated) {
-        this(capability, caller, userInitiated, null);
+    public ActionContext(String capability, CallerIdentity callerIdentity, boolean userInitiated) {
+        this(capability, callerIdentity, userInitiated, null);
     }
 
     public String getCapability() {
         return capability;
     }
 
-    public String getCaller() {
-        return caller;
+    public CallerIdentity getCallerIdentity() {
+        return callerIdentity;
     }
 
     public boolean isUserInitiated() {

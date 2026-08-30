@@ -21,6 +21,7 @@ android {
 
 dependencies {
     implementation(project(":policy-core"))
+    implementation(libs.androidx.core)
     implementation(libs.androidx.lifecycle.process)
 
     testImplementation(libs.junit)

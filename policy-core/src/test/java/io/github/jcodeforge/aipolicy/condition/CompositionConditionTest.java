@@ -1,20 +1,40 @@
 package io.github.jcodeforge.aipolicy.condition;
 
 import io.github.jcodeforge.aipolicy.ActionContext;
+import io.github.jcodeforge.aipolicy.CallerIdentity;
+import io.github.jcodeforge.aipolicy.CallerType;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
 
 public class CompositionConditionTest {
 
-    private final ActionContext userInitiatedContext = new ActionContext("customer.delete",
-                    "com.example.agent", true);
+    private final CallerIdentity agentCaller = new CallerIdentity("com.example.agent",
+            CallerType.EXTERNAL);
+
+    private final CallerIdentity otherCaller = new CallerIdentity("com.example.other",
+            CallerType.EXTERNAL);
+
+    private final ActionContext userInitiatedContext =
+            new ActionContext(
+                    "customer.delete",
+                    agentCaller,
+                    true
+            );
 
     private final ActionContext nonUserInitiatedContext =
-            new ActionContext("customer.delete", "com.example.agent", false);
+            new ActionContext(
+                    "customer.delete",
+                    agentCaller,
+                    false
+            );
 
-    private final ActionContext differentCallerContext = new ActionContext("customer.delete",
-            "com.example.other", true);
+    private final ActionContext differentCallerContext =
+            new ActionContext(
+                    "customer.delete",
+                    otherCaller,
+                    true
+            );
 
     // -------------------------------------------------------------------------
     // AndCondition
@@ -31,7 +51,8 @@ public class CompositionConditionTest {
 
     @Test
     public void andConditionDoesNotMatchWhenOneConditionDoesNotMatch() {
-        PolicyCondition condition = new AndCondition(new CallerCondition("com.example.agent"),
+        PolicyCondition condition = new AndCondition(
+                new CallerCondition("com.example.agent"),
                 new UserInitiatedCondition());
 
         assertFalse(condition.matches(nonUserInitiatedContext));
@@ -39,7 +60,8 @@ public class CompositionConditionTest {
 
     @Test
     public void andConditionDoesNotMatchWhenAnotherConditionDoesNotMatch() {
-        PolicyCondition condition = new AndCondition(new CallerCondition("com.example.agent"),
+        PolicyCondition condition = new AndCondition(
+                new CallerCondition("com.example.agent"),
                 new UserInitiatedCondition());
 
         assertFalse(condition.matches(differentCallerContext));
@@ -47,7 +69,8 @@ public class CompositionConditionTest {
 
     @Test
     public void andConditionMatchesSingleCondition() {
-        PolicyCondition condition = new AndCondition(new UserInitiatedCondition());
+        PolicyCondition condition =
+                new AndCondition(new UserInitiatedCondition());
 
         assertTrue(condition.matches(userInitiatedContext));
     }
@@ -64,12 +87,17 @@ public class CompositionConditionTest {
 
     @Test(expected = NullPointerException.class)
     public void andConditionDoesNotAllowNullCondition() {
-        new AndCondition(new UserInitiatedCondition(), null);
+        new AndCondition(
+                new UserInitiatedCondition(),
+                null
+        );
     }
 
     @Test(expected = NullPointerException.class)
     public void andConditionRequiresContext() {
-        PolicyCondition condition = new AndCondition(new UserInitiatedCondition());
+        PolicyCondition condition =
+                new AndCondition(new UserInitiatedCondition());
+
         condition.matches(null);
     }
 
@@ -79,7 +107,8 @@ public class CompositionConditionTest {
 
     @Test
     public void orConditionMatchesWhenOneConditionMatches() {
-        PolicyCondition condition = new OrCondition(new CallerCondition("com.example.agent"),
+        PolicyCondition condition = new OrCondition(
+                new CallerCondition("com.example.agent"),
                 new UserInitiatedCondition());
 
         assertTrue(condition.matches(differentCallerContext));
@@ -87,7 +116,8 @@ public class CompositionConditionTest {
 
     @Test
     public void orConditionMatchesWhenAllConditionsMatch() {
-        PolicyCondition condition = new OrCondition(new CallerCondition("com.example.agent"),
+        PolicyCondition condition = new OrCondition(
+                new CallerCondition("com.example.agent"),
                 new UserInitiatedCondition());
 
         assertTrue(condition.matches(userInitiatedContext));
@@ -95,7 +125,8 @@ public class CompositionConditionTest {
 
     @Test
     public void orConditionDoesNotMatchWhenNoConditionMatches() {
-        PolicyCondition condition = new OrCondition(new CallerCondition("com.example.trusted"),
+        PolicyCondition condition = new OrCondition(
+                new CallerCondition("com.example.trusted"),
                 new UserInitiatedCondition());
 
         assertFalse(condition.matches(nonUserInitiatedContext));
@@ -103,7 +134,8 @@ public class CompositionConditionTest {
 
     @Test
     public void orConditionMatchesSingleCondition() {
-        PolicyCondition condition = new OrCondition(new UserInitiatedCondition());
+        PolicyCondition condition =
+                new OrCondition(new UserInitiatedCondition());
 
         assertTrue(condition.matches(userInitiatedContext));
     }
@@ -120,12 +152,17 @@ public class CompositionConditionTest {
 
     @Test(expected = NullPointerException.class)
     public void orConditionDoesNotAllowNullCondition() {
-        new OrCondition(new UserInitiatedCondition(), null);
+        new OrCondition(
+                new UserInitiatedCondition(),
+                null
+        );
     }
 
     @Test(expected = NullPointerException.class)
     public void orConditionRequiresContext() {
-        PolicyCondition condition = new OrCondition(new UserInitiatedCondition());
+        PolicyCondition condition =
+                new OrCondition(new UserInitiatedCondition());
+
         condition.matches(null);
     }
 
@@ -135,21 +172,26 @@ public class CompositionConditionTest {
 
     @Test
     public void notConditionInvertsMatchingCondition() {
-        PolicyCondition condition = new NotCondition(new UserInitiatedCondition());
+        PolicyCondition condition =
+                new NotCondition(new UserInitiatedCondition());
 
         assertFalse(condition.matches(userInitiatedContext));
     }
 
     @Test
     public void notConditionInvertsNonMatchingCondition() {
-        PolicyCondition condition = new NotCondition(new UserInitiatedCondition());
+        PolicyCondition condition =
+                new NotCondition(new UserInitiatedCondition());
 
         assertTrue(condition.matches(nonUserInitiatedContext));
     }
 
     @Test
     public void notConditionCanWrapCallerCondition() {
-        PolicyCondition condition = new NotCondition(new CallerCondition("com.example.agent"));
+        PolicyCondition condition =
+                new NotCondition(
+                        new CallerCondition("com.example.agent")
+                );
 
         assertTrue(condition.matches(differentCallerContext));
     }
@@ -161,7 +203,9 @@ public class CompositionConditionTest {
 
     @Test(expected = NullPointerException.class)
     public void notConditionRequiresContext() {
-        PolicyCondition condition = new NotCondition(new UserInitiatedCondition());
+        PolicyCondition condition =
+                new NotCondition(new UserInitiatedCondition());
+
         condition.matches(null);
     }
 }

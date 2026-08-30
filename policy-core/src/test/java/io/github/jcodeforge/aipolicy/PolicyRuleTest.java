@@ -1,10 +1,15 @@
 package io.github.jcodeforge.aipolicy;
 
 import org.junit.Test;
-import static org.junit.Assert.*;
+
 import io.github.jcodeforge.aipolicy.condition.UserInitiatedCondition;
 
+import static org.junit.Assert.*;
+
 public class PolicyRuleTest {
+
+    private final CallerIdentity agentCaller = new CallerIdentity("com.example.agent",
+            CallerType.EXTERNAL);
 
     @Test
     public void allowPolicyHasAllowDecision() {
@@ -56,47 +61,29 @@ public class PolicyRuleTest {
 
     @Test
     public void ruleMatchesWhenConditionMatches() {
-        PolicyRule rule = new PolicyRule(Decision.REQUIRE_CONFIRMATION,
-                "Confirmation required", new UserInitiatedCondition());
-
-        ActionContext context = new ActionContext("customer.delete",
-                "com.example.agent", true
+        PolicyRule rule = new PolicyRule(
+                Decision.REQUIRE_CONFIRMATION,
+                "Confirmation required",
+                new UserInitiatedCondition()
         );
+
+        ActionContext context = new ActionContext("customer.delete", agentCaller,
+                true);
 
         assertTrue(rule.matches(context));
     }
 
     @Test
     public void ruleDoesNotMatchWhenConditionDoesNotMatch() {
-        PolicyRule rule = new PolicyRule(Decision.REQUIRE_CONFIRMATION, "Confirmation required",
-                new UserInitiatedCondition());
+        PolicyRule rule = new PolicyRule(
+                Decision.REQUIRE_CONFIRMATION,
+                "Confirmation required",
+                new UserInitiatedCondition()
+        );
 
-        ActionContext context = new ActionContext("customer.delete",
-                "com.example.agent", false);
+        ActionContext context = new ActionContext("customer.delete", agentCaller,
+                false);
 
         assertFalse(rule.matches(context));
-    }
-
-    @Test
-    public void applicationStateCanBeOmitted() {
-        ActionContext context = new ActionContext(
-                "customer.read",
-                "com.example.agent",
-                true
-        );
-
-        assertNull(context.getApplicationState());
-    }
-
-    @Test
-    public void applicationStateCanBeProvided() {
-        ActionContext context = new ActionContext(
-                "customer.read",
-                "com.example.agent",
-                true,
-                ApplicationState.FOREGROUND
-        );
-
-        assertEquals(ApplicationState.FOREGROUND, context.getApplicationState());
     }
 }
