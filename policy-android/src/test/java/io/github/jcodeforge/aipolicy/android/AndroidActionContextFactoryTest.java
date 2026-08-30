@@ -3,6 +3,9 @@ package io.github.jcodeforge.aipolicy.android;
 import io.github.jcodeforge.aipolicy.ActionContext;
 import io.github.jcodeforge.aipolicy.ApplicationState;
 import io.github.jcodeforge.aipolicy.CallerType;
+import io.github.jcodeforge.aipolicy.android.provider.AndroidApplicationStateProvider;
+import io.github.jcodeforge.aipolicy.android.provider.AndroidCallerProvider;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -15,8 +18,10 @@ import static org.mockito.Mockito.when;
 @RunWith(MockitoJUnitRunner.class)
 public class AndroidActionContextFactoryTest {
 
-    @Mock AndroidApplicationStateProvider stateProvider;
-    @Mock AndroidCallerProvider callerProvider;
+    @Mock
+    AndroidApplicationStateProvider stateProvider;
+    @Mock
+    AndroidCallerProvider callerProvider;
     @Mock AndroidCaller caller;
 
     @Test

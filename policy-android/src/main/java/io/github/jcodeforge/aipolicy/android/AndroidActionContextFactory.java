@@ -4,6 +4,8 @@ import java.util.Objects;
 import io.github.jcodeforge.aipolicy.ActionContext;
 import io.github.jcodeforge.aipolicy.CallerIdentity;
 import io.github.jcodeforge.aipolicy.CallerType;
+import io.github.jcodeforge.aipolicy.android.provider.AndroidApplicationStateProvider;
+import io.github.jcodeforge.aipolicy.android.provider.AndroidCallerProvider;
 
 public final class AndroidActionContextFactory {
 

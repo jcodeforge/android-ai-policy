@@ -1,6 +1,10 @@
-package io.github.jcodeforge.aipolicy.android;
+package io.github.jcodeforge.aipolicy.android.provider;
 
 import java.util.Objects;
+
+import io.github.jcodeforge.aipolicy.android.AndroidCaller;
+import io.github.jcodeforge.aipolicy.android.AndroidCallerType;
+import io.github.jcodeforge.aipolicy.android.AndroidPackageResolver;
 
 public final class ExternalAndroidCallerProvider implements AndroidCallerProvider {
 

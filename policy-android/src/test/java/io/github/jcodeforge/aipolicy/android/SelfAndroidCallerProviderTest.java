@@ -10,11 +10,15 @@ import org.mockito.junit.MockitoJUnitRunner;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.when;
 
+import io.github.jcodeforge.aipolicy.android.provider.ProcessUidProvider;
+import io.github.jcodeforge.aipolicy.android.provider.SelfAndroidCallerProvider;
+
 @RunWith(MockitoJUnitRunner.class)
 public class SelfAndroidCallerProviderTest {
 
     @Mock Context context;
-    @Mock ProcessUidProvider processUidProvider;
+    @Mock
+    ProcessUidProvider processUidProvider;
 
     SelfAndroidCallerProvider SUT;
 

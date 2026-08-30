@@ -1,4 +1,4 @@
-package io.github.jcodeforge.aipolicy.android;
+package io.github.jcodeforge.aipolicy.android.provider;
 
 import android.os.Process;
 

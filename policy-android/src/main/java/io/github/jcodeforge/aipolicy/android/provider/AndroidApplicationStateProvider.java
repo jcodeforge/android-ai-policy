@@ -1,4 +1,4 @@
-package io.github.jcodeforge.aipolicy.android;
+package io.github.jcodeforge.aipolicy.android.provider;
 
 import io.github.jcodeforge.aipolicy.ApplicationState;
 

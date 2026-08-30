@@ -9,12 +9,18 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.when;
 
+import io.github.jcodeforge.aipolicy.android.provider.BinderCallingUidProvider;
+import io.github.jcodeforge.aipolicy.android.provider.ExternalAndroidCallerProvider;
+import io.github.jcodeforge.aipolicy.android.provider.ProcessUidProvider;
+
 @RunWith(MockitoJUnitRunner.class)
 public class ExternalAndroidCallerProviderTest {
 
     @Mock AndroidPackageResolver resolver;
-    @Mock BinderCallingUidProvider callingUidProvider;
-    @Mock ProcessUidProvider processUidProvider;
+    @Mock
+    BinderCallingUidProvider callingUidProvider;
+    @Mock
+    ProcessUidProvider processUidProvider;
 
     @Test
     public void requiresResolver() {
