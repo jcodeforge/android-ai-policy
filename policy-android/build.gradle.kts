@@ -21,9 +21,10 @@ android {
 
 dependencies {
     implementation(project(":policy-core"))
+
     implementation(libs.androidx.core)
     implementation(libs.androidx.lifecycle.process)
-
+    testImplementation(libs.mockito.core)
     testImplementation(libs.junit)
     androidTestImplementation(libs.espresso.core)
     androidTestImplementation(libs.ext.junit)
