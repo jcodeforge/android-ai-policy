@@ -9,5 +9,10 @@ public enum ApplicationState {
     /**
      * The application is currently in the background.
      */
-    BACKGROUND
+    BACKGROUND,
+
+    /**
+     * The application state is unknown.
+     */
+    UNKNOWN
 }

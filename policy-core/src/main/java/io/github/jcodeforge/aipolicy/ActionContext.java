@@ -25,8 +25,7 @@ public final class ActionContext {
      * @param caller the caller requesting the capability
      * @param userInitiated whether the action was explicitly initiated by the user
      * @param applicationState the application state when the action was requested
-     * @throws NullPointerException if {@code capability}, {@code caller},
-     *                              or {@code applicationState} is {@code null}
+     * @throws NullPointerException if {@code capability}, {@code caller} is {@code null}
      * @throws IllegalArgumentException if {@code capability} or {@code caller}
      *                                  is blank
      */

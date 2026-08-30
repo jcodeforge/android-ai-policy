@@ -76,4 +76,27 @@ public class PolicyRuleTest {
 
         assertFalse(rule.matches(context));
     }
+
+    @Test
+    public void applicationStateCanBeOmitted() {
+        ActionContext context = new ActionContext(
+                "customer.read",
+                "com.example.agent",
+                true
+        );
+
+        assertNull(context.getApplicationState());
+    }
+
+    @Test
+    public void applicationStateCanBeProvided() {
+        ActionContext context = new ActionContext(
+                "customer.read",
+                "com.example.agent",
+                true,
+                ApplicationState.FOREGROUND
+        );
+
+        assertEquals(ApplicationState.FOREGROUND, context.getApplicationState());
+    }
 }
