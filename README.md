@@ -22,50 +22,29 @@ It can answer questions such as:
 
 ## Basic Usage
 
-Create a policy:
+### 1. Declare capabilities
+
+Annotate application methods that should be accessible to AI systems.
 
 ```java
-AiPolicy policy = AiPolicy.builder()
-        .addRule(
-                "customer.read",
-                new PolicyRule(
-                        Decision.ALLOW,
-                        null
-                )
-        )
-        .addRule(
-                "customer.delete",
-                new PolicyRule(
-                        Decision.REQUIRE_CONFIRMATION,
-                        "User confirmation is required"
-                )
-        )
-        .build();
+public final class CustomerService {
 
-ActionContext context = new ActionContext(
-        "customer.delete",
-        "com.example.aiagent",
-        true
-);
+    @AiCapability(
+            name = "customer.read",
+            description = "Read customer information"
+    )
+    public void readCustomer() {
+        // ...
+    }
 
-// Evaluate the action
-PolicyResult result = policy.evaluate(context);
-
-if (result.isAllowed()) {
-    // Execute action
+    @AiCapability(
+            name = "customer.delete",
+            description = "Delete a customer"
+    )
+    public void deleteCustomer() {
+        // ...
+    }
 }
-
-//Conditional Rules
-PolicyRule rule = new PolicyRule(
-        Decision.ALLOW,
-        null,
-        new CallerCondition("com.example.aiagent")
-);
-
-PolicyRule rule = new AndCondition(
-        new CallerCondition("com.example.aiagent"),
-        new UserInitiatedCondition()
-);
 ```
 
 ---
