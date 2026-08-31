@@ -27,6 +27,20 @@ public class AndroidPolicyTest {
         context = ApplicationProvider.getApplicationContext();
     }
 
+    @Test(expected = NullPointerException.class)
+    public void requiresContext() {
+        AiPolicy aiPolicy = AiPolicy.builder()
+                .addRule("customer.read", new PolicyRule(Decision.ALLOW, null))
+                .build();
+
+        AndroidPolicy.forSelfCalls(null, aiPolicy);
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void requiresPolicy() {
+        AndroidPolicy.forSelfCalls(context, null);
+    }
+
     @Test
     public void createsPolicyForSelfCalls() {
         InstrumentationRegistry.getInstrumentation().runOnMainSync(new Runnable() {

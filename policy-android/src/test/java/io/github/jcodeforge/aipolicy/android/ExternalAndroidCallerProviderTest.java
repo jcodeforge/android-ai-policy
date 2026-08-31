@@ -46,6 +46,23 @@ public class ExternalAndroidCallerProviderTest {
     }
 
     @Test
+    public void resolvesExternalCaller() {
+        when(callingUidProvider.getCallingUid()).thenReturn(12345);
+        when(processUidProvider.getUid()).thenReturn(10000);
+
+        when(resolver.resolvePackageName(12345)).thenReturn("com.example.agent");
+
+        ExternalAndroidCallerProvider provider =
+                new ExternalAndroidCallerProvider(resolver, callingUidProvider, processUidProvider);
+
+        AndroidCaller caller = provider.getCaller();
+
+        assertEquals(AndroidCallerType.EXTERNAL, caller.getType());
+        assertEquals(12345, caller.getUid());
+        assertEquals("com.example.agent", caller.getPackageName());
+    }
+
+    @Test
     public void createsExternalCaller() {
         when(callingUidProvider.getCallingUid()).thenReturn(12345);
         when(processUidProvider.getUid()).thenReturn(54321);
