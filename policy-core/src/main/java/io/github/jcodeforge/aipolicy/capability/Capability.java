@@ -2,6 +2,10 @@ package io.github.jcodeforge.aipolicy.capability;
 
 import java.util.Objects;
 
+import io.github.jcodeforge.aipolicy.ActionContext;
+import io.github.jcodeforge.aipolicy.AiPolicy;
+import io.github.jcodeforge.aipolicy.PolicyResult;
+
 /**
  * Represents an AI-accessible capability.
  *
@@ -81,5 +85,18 @@ public final class Capability {
                 "name='" + name + '\'' +
                 ", description='" + description + '\'' +
                 '}';
+    }
+
+    public PolicyResult evaluate(AiPolicy policy, ActionContext context) {
+        Objects.requireNonNull(policy, "policy must not be null");
+        Objects.requireNonNull(context, "context must not be null");
+
+        if (!name.equals(context.getCapability())) {
+            throw new IllegalArgumentException("ActionContext capability does not match capability: "
+                            + name
+            );
+        }
+
+        return policy.evaluate(context);
     }
 }

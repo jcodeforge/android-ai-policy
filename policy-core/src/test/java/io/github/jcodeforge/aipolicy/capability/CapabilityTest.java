@@ -2,8 +2,15 @@ package io.github.jcodeforge.aipolicy.capability;
 
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.*;
+
+import io.github.jcodeforge.aipolicy.ActionContext;
+import io.github.jcodeforge.aipolicy.AiPolicy;
+import io.github.jcodeforge.aipolicy.CallerIdentity;
+import io.github.jcodeforge.aipolicy.CallerType;
+import io.github.jcodeforge.aipolicy.Decision;
+import io.github.jcodeforge.aipolicy.PolicyResult;
+import io.github.jcodeforge.aipolicy.PolicyRule;
 
 public class CapabilityTest {
 
@@ -56,5 +63,64 @@ public class CapabilityTest {
         Capability second = new Capability("customer.delete", "Delete customer");
 
         assertNotEquals(first, second);
+    }
+
+    @Test
+    public void checksAllowedInvocation() {
+        Capability capability = new Capability("customer.read",
+                "Read customer information");
+
+        ActionContext context = new ActionContext("customer.read",
+                new CallerIdentity("com.example.app", CallerType.SELF),
+                true);
+
+        AiPolicy policy = AiPolicy.builder()
+                .addRule("customer.read", new PolicyRule(Decision.ALLOW, null))
+                .build();
+
+        PolicyResult result = capability.evaluate(policy, context);
+
+        assertTrue(result.isAllowed());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void rejectsDifferentCapability() {
+        Capability capability = new Capability("customer.read",
+                "Read customer information");
+
+        ActionContext context = new ActionContext("customer.delete",
+                new CallerIdentity("com.example.app", CallerType.SELF), true);
+
+        AiPolicy policy = AiPolicy.builder().build();
+
+        capability.evaluate(policy, context);
+    }
+
+    @Test
+    public void checksDeniedInvocation() {
+        Capability capability = new Capability("customer.delete", "Delete customer");
+
+        ActionContext context = new ActionContext("customer.delete",
+                new CallerIdentity("com.example.app", CallerType.SELF), false);
+
+        AiPolicy policy = AiPolicy.builder()
+                .addRule("customer.delete", new PolicyRule(Decision.DENY,
+                        "Deletion is not allowed"))
+                .build();
+
+        PolicyResult result = capability.evaluate(policy, context);
+
+        assertFalse(result.isAllowed());
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void requiresPolicyForEvaluation() {
+        Capability capability = new Capability("customer.read",
+                "Read customer information");
+
+        ActionContext context = new ActionContext("customer.read",
+                new CallerIdentity("com.example.app", CallerType.SELF), true);
+
+        capability.evaluate(null, context);
     }
 }
