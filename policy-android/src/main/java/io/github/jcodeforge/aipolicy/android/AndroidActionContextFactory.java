@@ -7,7 +7,7 @@ import io.github.jcodeforge.aipolicy.CallerType;
 import io.github.jcodeforge.aipolicy.android.provider.AndroidApplicationStateProvider;
 import io.github.jcodeforge.aipolicy.android.provider.AndroidCallerProvider;
 
-public final class AndroidActionContextFactory {
+final class AndroidActionContextFactory {
 
     private final AndroidApplicationStateProvider stateProvider;
     private final AndroidCallerProvider callerProvider;
