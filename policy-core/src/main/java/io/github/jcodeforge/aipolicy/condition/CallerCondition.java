@@ -20,8 +20,4 @@ public final class CallerCondition implements PolicyCondition {
     public boolean matches(ActionContext context) {
         return expectedCaller.equals(context.getCallerIdentity().getId());
     }
-
-    public String getExpectedCaller() {
-        return expectedCaller;
-    }
 }
