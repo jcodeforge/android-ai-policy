@@ -117,4 +117,18 @@ public class AndroidPolicyTest {
             }
         });
     }
+
+    @Test(expected = NullPointerException.class)
+    public void externalCallsRequiresContext() {
+        AiPolicy aiPolicy = AiPolicy.builder()
+                .addRule("customer.read", new PolicyRule(Decision.ALLOW, null))
+                .build();
+
+        AndroidPolicy.forExternalCalls(null, aiPolicy);
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void externalCallsRequiresPolicy() {
+        AndroidPolicy.forExternalCalls(context, null);
+    }
 }
