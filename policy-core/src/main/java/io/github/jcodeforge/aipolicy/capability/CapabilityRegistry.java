@@ -37,6 +37,23 @@ public final class CapabilityRegistry {
     }
 
     /**
+     * Registers all supplied capabilities.
+     *
+     * @param capabilities capabilities to register
+     * @throws NullPointerException if {@code capabilities} or an element
+     *                              is {@code null}
+     * @throws IllegalArgumentException if a capability with the same name
+     *                                  is already registered
+     */
+    public void registerAll(Collection<Capability> capabilities) {
+        Objects.requireNonNull(capabilities, "capabilities must not be null");
+
+        for (Capability capability : capabilities) {
+            register(capability);
+        }
+    }
+
+    /**
      * Returns the capability registered under the given name.
      *
      * @param name capability name

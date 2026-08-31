@@ -1,6 +1,8 @@
 package io.github.jcodeforge.aipolicy.capability;
 
 import org.junit.Test;
+
+import java.util.Arrays;
 import java.util.Collection;
 
 import static org.junit.Assert.assertEquals;
@@ -23,6 +25,22 @@ public class CapabilityRegistryTest {
         assertTrue(registry.contains("customer.read"));
         assertSame(capability, registry.get("customer.read"));
         assertEquals(1, registry.size());
+    }
+
+    @Test
+    public void registersAllCapabilities() {
+        CapabilityRegistry registry = new CapabilityRegistry();
+
+        Capability read = new Capability("customer.read",
+                "Read customer information");
+
+        Capability delete = new Capability("customer.delete", "Delete customer");
+
+        registry.registerAll(Arrays.asList(read, delete));
+
+        assertEquals(2, registry.size());
+        assertSame(read, registry.get("customer.read"));
+        assertSame(delete, registry.get("customer.delete"));
     }
 
     @Test(expected = IllegalArgumentException.class)
