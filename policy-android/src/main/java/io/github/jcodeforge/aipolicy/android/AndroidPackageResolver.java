@@ -3,7 +3,7 @@ package io.github.jcodeforge.aipolicy.android;
 import android.content.Context;
 import java.util.Objects;
 
-final class AndroidPackageResolver {
+public final class AndroidPackageResolver {
 
     private final Context context;
 
