@@ -7,6 +7,7 @@ import io.github.jcodeforge.aipolicy.AiPolicy;
 import io.github.jcodeforge.aipolicy.Decision;
 import io.github.jcodeforge.aipolicy.PolicyResult;
 import io.github.jcodeforge.aipolicy.PolicyRule;
+import io.github.jcodeforge.aipolicy.android.condition.AndroidPermissionCondition;
 import io.github.jcodeforge.aipolicy.condition.AndCondition;
 import io.github.jcodeforge.aipolicy.condition.CallerCondition;
 import io.github.jcodeforge.aipolicy.condition.UserInitiatedCondition;
@@ -141,6 +142,47 @@ public class AndroidPolicyTest {
                 AndroidPolicy.forExternalCalls(context, null);
             }
         });
+    }
 
+    @Test
+    public void evaluatesPermissionCondition() {
+        InstrumentationRegistry.getInstrumentation().runOnMainSync(new Runnable() {
+            @Override
+            public void run() {
+                AiPolicy aiPolicy = AiPolicy.builder()
+                        .addRule("customer.delete", new PolicyRule(Decision.ALLOW,
+                                null,
+                                new AndroidPermissionCondition(context, "android.permission.INTERNET"))
+                        )
+                        .build();
+
+                        AndroidPolicy policy = AndroidPolicy.forSelfCalls(context, aiPolicy);
+
+                        PolicyResult result = policy.evaluate("customer.delete", true);
+
+                        assertTrue(result.isAllowed());
+                    }
+        });
+    }
+
+    @Test
+    public void deniesWhenPermissionIsMissing() {
+        InstrumentationRegistry.getInstrumentation().runOnMainSync(new Runnable() {
+            @Override
+            public void run() {
+                AiPolicy aiPolicy = AiPolicy.builder()
+                        .addRule("customer.delete", new PolicyRule(Decision.ALLOW,
+                                        null, new AndroidPermissionCondition(context,
+                                        "android.permission.CAMERA")))
+                        .build();
+
+                        AndroidPolicy policy = AndroidPolicy.forSelfCalls(context, aiPolicy);
+
+                        PolicyResult result = policy.evaluate("customer.delete",
+                                true);
+
+                        assertTrue(result.isDenied());
+                    }
+                });
     }
 }
