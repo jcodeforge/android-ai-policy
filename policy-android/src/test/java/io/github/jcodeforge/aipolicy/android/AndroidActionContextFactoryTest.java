@@ -18,10 +18,8 @@ import static org.mockito.Mockito.when;
 @RunWith(MockitoJUnitRunner.class)
 public class AndroidActionContextFactoryTest {
 
-    @Mock
-    AndroidApplicationStateProvider stateProvider;
-    @Mock
-    AndroidCallerProvider callerProvider;
+    @Mock AndroidApplicationStateProvider stateProvider;
+    @Mock AndroidCallerProvider callerProvider;
     @Mock AndroidCaller caller;
 
     @Test

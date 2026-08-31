@@ -17,8 +17,7 @@ import io.github.jcodeforge.aipolicy.android.provider.SelfAndroidCallerProvider;
 public class SelfAndroidCallerProviderTest {
 
     @Mock Context context;
-    @Mock
-    ProcessUidProvider processUidProvider;
+    @Mock ProcessUidProvider processUidProvider;
 
     SelfAndroidCallerProvider SUT;
 

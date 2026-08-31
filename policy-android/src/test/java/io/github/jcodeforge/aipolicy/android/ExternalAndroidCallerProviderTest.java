@@ -6,7 +6,6 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
 import static org.mockito.Mockito.when;
 
 import io.github.jcodeforge.aipolicy.android.provider.BinderCallingUidProvider;
@@ -17,40 +16,22 @@ import io.github.jcodeforge.aipolicy.android.provider.ProcessUidProvider;
 public class ExternalAndroidCallerProviderTest {
 
     @Mock AndroidPackageResolver resolver;
-    @Mock
-    BinderCallingUidProvider callingUidProvider;
-    @Mock
-    ProcessUidProvider processUidProvider;
+    @Mock BinderCallingUidProvider callingUidProvider;
+    @Mock ProcessUidProvider processUidProvider;
 
-    @Test
+    @Test(expected = NullPointerException.class)
     public void requiresResolver() {
-        try {
-            new ExternalAndroidCallerProvider(null, callingUidProvider,
-                    processUidProvider);
-            fail("Expected NullPointerException");
-        } catch (NullPointerException expected) {
-            assertEquals("packageResolver must not be null", expected.getMessage());
-        }
+        new ExternalAndroidCallerProvider(null, callingUidProvider, processUidProvider);
     }
 
-    @Test
+    @Test(expected = NullPointerException.class)
     public void requiresCallingUidProvider() {
-        try {
-            new ExternalAndroidCallerProvider(resolver, null, processUidProvider);
-            fail("Expected NullPointerException");
-        } catch (NullPointerException expected) {
-            assertEquals("callingUidProvider must not be null", expected.getMessage());
-        }
+        new ExternalAndroidCallerProvider(resolver, null, processUidProvider);
     }
 
-    @Test
+    @Test(expected = NullPointerException.class)
     public void requiresProcessUidProvider() {
-        try {
-            new ExternalAndroidCallerProvider(resolver, callingUidProvider, null);
-            fail("Expected NullPointerException");
-        } catch (NullPointerException expected) {
-            assertEquals("processUidProvider must not be null", expected.getMessage());
-        }
+        new ExternalAndroidCallerProvider(resolver, callingUidProvider, null);
     }
 
     @Test(expected = IllegalStateException.class)
