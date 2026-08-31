@@ -13,6 +13,22 @@ import io.github.jcodeforge.aipolicy.android.provider.ProcessUidProvider;
 import io.github.jcodeforge.aipolicy.android.provider.SelfAndroidCallerProvider;
 import java.util.Objects;
 
+/**
+ * Android integration for {@link AiPolicy}.
+ *
+ * <p>{@code AndroidPolicy} provides the Android-specific context required
+ * for policy evaluation, including the caller identity and application
+ * lifecycle state.</p>
+ *
+ * <p>Use {@link #forSelfCalls(Context, AiPolicy)} when evaluating actions
+ * initiated by the application itself. Use
+ * {@link #forExternalCalls(Context, AiPolicy)} when evaluating calls
+ * received from an external Android Binder caller.</p>
+ *
+ * <p>The Android-specific context and caller resolution are created
+ * internally. Applications only need to provide an Android
+ * {@link Context} and an {@link AiPolicy}.</p>
+ */
 public final class AndroidPolicy {
 
     private final AiPolicy aiPolicy;
@@ -21,9 +37,23 @@ public final class AndroidPolicy {
 
     private AndroidPolicy(AiPolicy aiPolicy, AndroidActionContextFactory contextFactory) {
         this.aiPolicy = Objects.requireNonNull(aiPolicy, "policy must not be null");
-        this.contextFactory = Objects.requireNonNull(contextFactory, "context must not be null");
+        this.contextFactory = Objects.requireNonNull(contextFactory,
+                "contextFactory must not be null");
     }
 
+    /**
+     * Creates an {@code AndroidPolicy} for actions initiated by the
+     * application itself.
+     *
+     * <p>The resulting policy identifies the current application as
+     * {@link AndroidCallerType#SELF}.</p>
+     *
+     * @param context Android context used to obtain the application context
+     * @param aiPolicy policy to evaluate
+     * @return an Android policy configured for self-initiated calls
+     * @throws NullPointerException if {@code context} or {@code aiPolicy}
+     *                              is {@code null}
+     */
     public static AndroidPolicy forSelfCalls(Context context, AiPolicy aiPolicy) {
         Objects.requireNonNull(context, "context must not be null");
         Objects.requireNonNull(aiPolicy, "policy must not be null");
@@ -41,6 +71,20 @@ public final class AndroidPolicy {
         return new AndroidPolicy(aiPolicy, contextFactory);
     }
 
+    /**
+     * Creates an {@code AndroidPolicy} for calls received from an
+     * external Android Binder caller.
+     *
+     * <p>The resulting policy resolves the calling UID and associated
+     * package name and identifies the caller as
+     * {@link AndroidCallerType#EXTERNAL}.</p>
+     *
+     * @param context Android context used to resolve the calling package
+     * @param aiPolicy policy to evaluate
+     * @return an Android policy configured for external Binder calls
+     * @throws NullPointerException if {@code context} or {@code aiPolicy}
+     *                              is {@code null}
+     */
     public static AndroidPolicy forExternalCalls(Context context, AiPolicy aiPolicy) {
         Objects.requireNonNull(context, "context must not be null");
         Objects.requireNonNull(aiPolicy, "policy must not be null");
@@ -61,6 +105,17 @@ public final class AndroidPolicy {
         return new AndroidPolicy(aiPolicy, contextFactory);
     }
 
+    /**
+     * Evaluates a capability using the configured Android context.
+     *
+     * @param capability capability to evaluate
+     * @param userInitiated whether the action was explicitly initiated
+     *                      by the user
+     * @return the result of the policy evaluation
+     * @throws NullPointerException if {@code capability} is {@code null}
+     *                              and rejected by the underlying context
+     *                              factory
+     */
     public PolicyResult evaluate(String capability, boolean userInitiated) {
         ActionContext context = contextFactory.create(capability, userInitiated);
 
