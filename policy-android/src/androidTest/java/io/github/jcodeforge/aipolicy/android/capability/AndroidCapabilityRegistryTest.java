@@ -1,21 +1,18 @@
 package io.github.jcodeforge.aipolicy.android.capability;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+
 import io.github.jcodeforge.aipolicy.capability.AiCapability;
 import io.github.jcodeforge.aipolicy.capability.Capability;
-import io.github.jcodeforge.aipolicy.capability.CapabilityIndex;
-import io.github.jcodeforge.aipolicy.capability.CapabilityIndexProvider;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import java.util.List;
-
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 @RunWith(AndroidJUnit4.class)
 public class AndroidCapabilityRegistryTest {
 
-    public static final class TestService {
+    public static final class FirstServiceTest {
 
         @AiCapability(
                 name = "customer.read",
@@ -25,38 +22,31 @@ public class AndroidCapabilityRegistryTest {
         }
     }
 
-    public static final class TestCapabilityIndex implements CapabilityIndex {
+    public static final class SecondServiceTest {
 
-        @Override
-        public List<Class<?>> getCapabilityClasses() {
-            return List.of(TestService.class);
-        }
-    }
-
-    public static final class TestCapabilityIndexProvider implements CapabilityIndexProvider {
-
-        @Override
-        public CapabilityIndex getCapabilityIndex() {
-            return new TestCapabilityIndex();
+        @AiCapability(
+                name = "customer.delete",
+                description = "Delete customer"
+        )
+        public void deleteCustomer() {
         }
     }
 
     @Test
-    public void registersCapabilitiesFromIndexProvider() {
+    public void registersCapabilitiesAutomatically() {
         AndroidCapabilityRegistry registry = AndroidCapabilityRegistry.getInstance();
 
-        registry.initialize(androidx.test.core.app.ApplicationProvider.getApplicationContext());
         Capability capability = registry.get("customer.read");
+
         assertNotNull(capability);
         assertTrue(registry.contains("customer.read"));
     }
 
     @Test
-    public void initializationIsIdempotent() {
+    public void registersCapabilitiesFromMultipleClasses() {
         AndroidCapabilityRegistry registry = AndroidCapabilityRegistry.getInstance();
 
-        registry.initialize(androidx.test.core.app.ApplicationProvider.getApplicationContext());
-        registry.initialize(androidx.test.core.app.ApplicationProvider.getApplicationContext());
         assertTrue(registry.contains("customer.read"));
+        assertTrue(registry.contains("customer.delete"));
     }
 }
