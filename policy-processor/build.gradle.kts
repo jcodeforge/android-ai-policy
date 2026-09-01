@@ -11,4 +11,5 @@ dependencies {
     implementation(project(":policy-core"))
 
     testImplementation(libs.junit)
+    testImplementation("com.google.testing.compile:compile-testing:0.23.0")
 }
