@@ -7,16 +7,16 @@ import javax.tools.JavaFileObject;
 import javax.tools.StandardJavaFileManager;
 import javax.tools.StandardLocation;
 import javax.tools.ToolProvider;
-import static com.google.testing.compile.Compiler.javac;
-import static com.google.testing.compile.JavaFileObjects.forSourceLines;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
-
 import io.github.jcodeforge.aipolicy.capability.CapabilityIndexProvider;
+import static com.google.testing.compile.Compiler.javac;
+import static com.google.testing.compile.JavaFileObjects.forSourceLines;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 public class AiCapabilityProcessorTest {
 
@@ -25,7 +25,6 @@ public class AiCapabilityProcessorTest {
 
     @Test
     public void generatesCapabilityIndex() {
-
         JavaFileObject source = forSourceLines(
                 "example.CustomerService",
 
@@ -73,13 +72,13 @@ public class AiCapabilityProcessorTest {
         );
 
         CompilationSubject.assertThat(javac()
-                        .withProcessors(new AiCapabilityProcessor())
-                        .compile(source))
+                .withProcessors(new AiCapabilityProcessor())
+                .compile(source))
                 .succeeded();
     }
 
     @Test
-    public void generatesIndexForMultipleCapabilityClasses() {
+    public void generatesIndexForMultipleCapabilities() {
         JavaFileObject customerService = forSourceLines(
                 "example.CustomerService",
 
@@ -145,9 +144,8 @@ public class AiCapabilityProcessorTest {
                 .succeeded();
     }
 
-
     @Test
-    public void generatesCapabilityIndexAndProvider() throws Exception {
+    public void generatesCapabilityMetadata() throws Exception {
         Path outputDirectory = Files.createTempDirectory("ai-policy-processor-test");
         Path sourceDirectory = Files.createTempDirectory("ai-policy-processor-source");
         Path sourceFile = sourceDirectory.resolve("CustomerService.java");
@@ -157,16 +155,21 @@ public class AiCapabilityProcessorTest {
                 Arrays.asList(
                         "package example;",
                         "",
+                        "import io.github.jcodeforge.aipolicy.CallerType;",
                         "import io.github.jcodeforge.aipolicy.capability.AiCapability;",
                         "",
                         "public final class CustomerService {",
                         "",
                         "    @AiCapability(",
-                        "        name = \"customer.read\",",
-                        "        description = \"Read customer information\"",
+                        "        name = \"customer.delete\",",
+                        "        description = \"Delete customer\",",
+                        "        userInitiatedRequired = true,",
+                        "        allowedCallerTypes = {CallerType.SELF},",
+                        "        requiredPermissions = {\"android.permission.INTERNET\"}",
                         "    )",
-                        "    public void readCustomer() {",
+                        "    public void deleteCustomer() {",
                         "    }",
+                        "",
                         "}"
                 )
         );
@@ -175,13 +178,13 @@ public class AiCapabilityProcessorTest {
 
         assertNotNull(compiler);
 
-        try (StandardJavaFileManager fileManager =
-                     compiler.getStandardFileManager(null, null, null)) {
+        try (StandardJavaFileManager fileManager = compiler.getStandardFileManager(null,
+                null, null)) {
 
             fileManager.setLocation(StandardLocation.CLASS_OUTPUT, List.of(outputDirectory.toFile()));
 
-            Iterable<? extends JavaFileObject> compilationUnits =
-                    fileManager.getJavaFileObjects(sourceFile.toFile());
+            Iterable<? extends JavaFileObject> compilationUnits = fileManager.getJavaFileObjects(
+                    sourceFile.toFile());
 
             JavaCompiler.CompilationTask task =
                     compiler.getTask(
@@ -204,30 +207,58 @@ public class AiCapabilityProcessorTest {
                                 + "GeneratedCapabilityIndex.java"
                 );
 
-        Path generatedProvider =
-                outputDirectory.resolve(
-                        "io/github/jcodeforge/aipolicy/capability/generated/"
-                                + "GeneratedCapabilityIndexProvider.java"
-                );
-
         assertTrue(Files.exists(generatedIndex));
-        assertTrue(Files.exists(generatedProvider));
 
         String indexSource = Files.readString(generatedIndex);
 
-        assertTrue(indexSource.contains("example.CustomerService.class"));
+        /*
+         * The generated index must now contain Capability instances,
+         * not capability classes.
+         */
+        assertTrue(indexSource.contains("new Capability("));
+        assertTrue(indexSource.contains("\"customer.delete\""));
+        assertTrue(indexSource.contains("\"Delete customer\""));
+        assertTrue(
+                indexSource.contains("true")
+        );
 
-        String providerSource = Files.readString(generatedProvider);
+        assertTrue(
+                indexSource.contains("CallerType.SELF")
+        );
 
-        assertTrue(providerSource.contains("implements CapabilityIndexProvider"));
-        assertTrue(providerSource.contains("new GeneratedCapabilityIndex()"));
+        assertTrue(
+                indexSource.contains(
+                        "\"android.permission.INTERNET\""
+                )
+        );
+
+        /*
+         * The old reflection-based representation must no longer
+         * be generated.
+         */
+        assertFalse(indexSource.contains(
+                "example.CustomerService.class"
+        ));
     }
 
     @Test
-    public void generatesProviderServiceFile() throws Exception {
-        Path outputDirectory = Files.createTempDirectory("ai-policy-processor-test");
-        Path sourceDirectory = Files.createTempDirectory("ai-policy-processor-source");
-        Path sourceFile = sourceDirectory.resolve("CustomerService.java");
+    public void generatesCapabilityIndexAndProvider()
+            throws Exception {
+
+        Path outputDirectory =
+                Files.createTempDirectory(
+                        "ai-policy-processor-test"
+                );
+
+        Path sourceDirectory =
+                Files.createTempDirectory(
+                        "ai-policy-processor-source"
+                );
+
+        Path sourceFile =
+                sourceDirectory.resolve(
+                        "CustomerService.java"
+                );
 
         Files.write(
                 sourceFile,
@@ -244,19 +275,31 @@ public class AiCapabilityProcessorTest {
                         "    )",
                         "    public void readCustomer() {",
                         "    }",
+                        "",
                         "}"
                 )
         );
 
-        JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+        JavaCompiler compiler =
+                ToolProvider.getSystemJavaCompiler();
+
+        assertNotNull(compiler);
 
         try (StandardJavaFileManager fileManager =
-                     compiler.getStandardFileManager(null, null, null)) {
+                     compiler.getStandardFileManager(
+                             null,
+                             null,
+                             null)) {
 
-            fileManager.setLocation(StandardLocation.CLASS_OUTPUT, List.of(outputDirectory.toFile()));
+            fileManager.setLocation(
+                    StandardLocation.CLASS_OUTPUT,
+                    List.of(outputDirectory.toFile())
+            );
 
             Iterable<? extends JavaFileObject> compilationUnits =
-                    fileManager.getJavaFileObjects(sourceFile.toFile());
+                    fileManager.getJavaFileObjects(
+                            sourceFile.toFile()
+                    );
 
             JavaCompiler.CompilationTask task =
                     compiler.getTask(
@@ -268,19 +311,166 @@ public class AiCapabilityProcessorTest {
                             compilationUnits
                     );
 
-            task.setProcessors(List.of(new AiCapabilityProcessor()));
+            task.setProcessors(
+                    List.of(new AiCapabilityProcessor())
+            );
 
             assertTrue(task.call());
         }
 
-        Path serviceFile = outputDirectory.resolve("META-INF/services/"
-                        + CapabilityIndexProvider.class.getName());
+        Path generatedIndex =
+                outputDirectory.resolve(
+                        GENERATED_PACKAGE.replace('.', '/')
+                                + "/GeneratedCapabilityIndex.java"
+                );
+
+        Path generatedProvider =
+                outputDirectory.resolve(
+                        GENERATED_PACKAGE.replace('.', '/')
+                                + "/GeneratedCapabilityIndexProvider.java"
+                );
+
+        assertTrue(Files.exists(generatedIndex));
+        assertTrue(Files.exists(generatedProvider));
+
+        String indexSource =
+                Files.readString(generatedIndex);
+
+        assertTrue(
+                indexSource.contains(
+                        "implements CapabilityIndex"
+                )
+        );
+
+        assertTrue(
+                indexSource.contains(
+                        "List<Capability> getCapabilities()"
+                )
+        );
+
+        assertTrue(
+                indexSource.contains(
+                        "new Capability("
+                )
+        );
+
+        assertTrue(
+                indexSource.contains(
+                        "\"customer.read\""
+                )
+        );
+
+        assertTrue(
+                indexSource.contains(
+                        "\"Read customer information\""
+                )
+        );
+
+        String providerSource =
+                Files.readString(generatedProvider);
+
+        assertTrue(
+                providerSource.contains(
+                        "implements CapabilityIndexProvider"
+                )
+        );
+
+        assertTrue(providerSource.contains("new GeneratedCapabilityIndex()"));
+    }
+
+    @Test
+    public void generatesProviderServiceFile()
+            throws Exception {
+
+        Path outputDirectory =
+                Files.createTempDirectory(
+                        "ai-policy-processor-test"
+                );
+
+        Path sourceDirectory =
+                Files.createTempDirectory(
+                        "ai-policy-processor-source"
+                );
+
+        Path sourceFile =
+                sourceDirectory.resolve(
+                        "CustomerService.java"
+                );
+
+        Files.write(
+                sourceFile,
+                Arrays.asList(
+                        "package example;",
+                        "",
+                        "import io.github.jcodeforge.aipolicy.capability.AiCapability;",
+                        "",
+                        "public final class CustomerService {",
+                        "",
+                        "    @AiCapability(",
+                        "        name = \"customer.read\",",
+                        "        description = \"Read customer information\"",
+                        "    )",
+                        "    public void readCustomer() {",
+                        "    }",
+                        "",
+                        "}"
+                )
+        );
+
+        JavaCompiler compiler =
+                ToolProvider.getSystemJavaCompiler();
+
+        assertNotNull(compiler);
+
+        try (StandardJavaFileManager fileManager =
+                     compiler.getStandardFileManager(
+                             null,
+                             null,
+                             null)) {
+
+            fileManager.setLocation(
+                    StandardLocation.CLASS_OUTPUT,
+                    List.of(outputDirectory.toFile())
+            );
+
+            Iterable<? extends JavaFileObject> compilationUnits =
+                    fileManager.getJavaFileObjects(
+                            sourceFile.toFile()
+                    );
+
+            JavaCompiler.CompilationTask task =
+                    compiler.getTask(
+                            null,
+                            fileManager,
+                            null,
+                            null,
+                            null,
+                            compilationUnits
+                    );
+
+            task.setProcessors(
+                    List.of(new AiCapabilityProcessor())
+            );
+
+            assertTrue(task.call());
+        }
+
+        Path serviceFile =
+                outputDirectory.resolve(
+                        "META-INF/services/"
+                                + CapabilityIndexProvider.class.getName()
+                );
 
         assertTrue(Files.exists(serviceFile));
 
-        String serviceContent = Files.readString(serviceFile);
+        String serviceContent =
+                Files.readString(serviceFile);
 
-        assertTrue(serviceContent.contains("io.github.jcodeforge.aipolicy.capability.generated."
-                        + "GeneratedCapabilityIndexProvider"));
+        assertTrue(
+                serviceContent.contains(
+                        GENERATED_PACKAGE
+                                + ".GeneratedCapabilityIndexProvider"
+                )
+        );
     }
 }

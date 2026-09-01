@@ -1,12 +1,12 @@
 package io.github.jcodeforge.aipolicy.processor;
 
+import io.github.jcodeforge.aipolicy.CallerType;
 import io.github.jcodeforge.aipolicy.capability.AiCapability;
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Filer;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedAnnotationTypes;
-import javax.annotation.processing.SupportedSourceVersion;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
@@ -15,13 +15,13 @@ import javax.tools.JavaFileObject;
 import javax.tools.StandardLocation;
 import java.io.IOException;
 import java.io.Writer;
-import java.util.LinkedHashSet;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 @SupportedAnnotationTypes(
         "io.github.jcodeforge.aipolicy.capability.AiCapability"
 )
-@SupportedSourceVersion(SourceVersion.RELEASE_11)
 public final class AiCapabilityProcessor extends AbstractProcessor {
 
     private static final String GENERATED_PACKAGE =
@@ -29,13 +29,18 @@ public final class AiCapabilityProcessor extends AbstractProcessor {
 
     private static final String GENERATED_CLASS = "GeneratedCapabilityIndex";
 
-    private final Set<String> capabilityClasses = new LinkedHashSet<>();
+    private final List<CapabilityMetadata> capabilities = new ArrayList<>();
 
     private boolean generated;
 
     @Override
     public synchronized void init(ProcessingEnvironment processingEnv) {
         super.init(processingEnv);
+    }
+
+    @Override
+    public SourceVersion getSupportedSourceVersion() {
+        return SourceVersion.latestSupported();
     }
 
     @Override
@@ -52,13 +57,15 @@ public final class AiCapabilityProcessor extends AbstractProcessor {
         }
 
         for (Element element : roundEnv.getElementsAnnotatedWith(AiCapability.class)) {
-            Element enclosingElement = element.getEnclosingElement();
+            AiCapability annotation = element.getAnnotation(AiCapability.class);
 
-            if (enclosingElement instanceof TypeElement) {
-                TypeElement type = (TypeElement) enclosingElement;
-
-                capabilityClasses.add(type.getQualifiedName().toString());
+            if (annotation == null) {
+                continue;
             }
+
+            capabilities.add(new CapabilityMetadata(annotation.name(), annotation.description(),
+                    annotation.userInitiatedRequired(),
+                    annotation.allowedCallerTypes(), annotation.requiredPermissions()));
         }
 
         return false;
@@ -68,35 +75,45 @@ public final class AiCapabilityProcessor extends AbstractProcessor {
         try {
             Filer filer = processingEnv.getFiler();
 
-            JavaFileObject file =
-                    filer.createSourceFile(GENERATED_PACKAGE + "." + GENERATED_CLASS);
+            JavaFileObject file = filer.createSourceFile(GENERATED_PACKAGE + "."
+                    + GENERATED_CLASS);
 
             try (Writer writer = file.openWriter()) {
                 writer.write("package " + GENERATED_PACKAGE + ";\n\n");
+                writer.write("import io.github.jcodeforge.aipolicy.CallerType;\n");
+                writer.write("import io.github.jcodeforge.aipolicy.capability.Capability;\n");
                 writer.write("import io.github.jcodeforge.aipolicy.capability.CapabilityIndex;\n");
                 writer.write("import java.util.Arrays;\n");
                 writer.write("import java.util.List;\n\n");
                 writer.write("public final class " + GENERATED_CLASS + " implements CapabilityIndex {\n\n");
                 writer.write("    @Override\n");
-                writer.write("    public List<Class<?>> getCapabilityClasses() {\n");
+                writer.write("    public List<Capability> getCapabilities() {\n");
 
-                if (capabilityClasses.isEmpty()) {
+                if (capabilities.isEmpty()) {
                     writer.write("        return Arrays.asList();\n");
+
                 } else {
                     writer.write("        return Arrays.asList(\n");
 
-                    int index = 0;
+                    for (int i = 0; i < capabilities.size(); i++) {
+                        CapabilityMetadata capability = capabilities.get(i);
 
-                    for (String className : capabilityClasses) {
-                        writer.write("                " + className + ".class");
+                        writer.write("                new Capability(\n");
+                        writer.write("                        " + quote(capability.name) + ",\n");
+                        writer.write("                        " + quote(capability.description) + ",\n");
+                        writer.write("                        " + capability.userInitiatedRequired + ",\n");
+                        writer.write("                        "
+                                + generateCallerTypes(capability.allowedCallerTypes) + ",\n");
+                        writer.write("                        "
+                                + generateStringList(capability.requiredPermissions));
 
-                        if (index < capabilityClasses.size() - 1) {
+                        writer.write("\n                )");
+
+                        if (i < capabilities.size() - 1) {
                             writer.write(",");
                         }
 
                         writer.write("\n");
-
-                        index++;
                     }
 
                     writer.write("        );\n");
@@ -108,8 +125,7 @@ public final class AiCapabilityProcessor extends AbstractProcessor {
 
         } catch (IOException exception) {
             processingEnv.getMessager().printMessage(javax.tools.Diagnostic.Kind.ERROR,
-                    "Failed to generate " + GENERATED_CLASS + ": " + exception.getMessage()
-            );
+                    "Failed to generate " + GENERATED_CLASS + ": " + exception.getMessage());
         }
     }
 
@@ -152,6 +168,87 @@ public final class AiCapabilityProcessor extends AbstractProcessor {
             processingEnv.getMessager().printMessage(javax.tools.Diagnostic.Kind.ERROR,
                     "Failed to generate CapabilityIndexProvider service file: "
                             + exception.getMessage());
+        }
+    }
+
+    private String quote(String value) {
+        return "\"" + escape(value) + "\"";
+    }
+
+    private String escape(String value) {
+        return value
+                .replace("\\", "\\\\")
+                .replace("\"", "\\\"")
+                .replace("\n", "\\n")
+                .replace("\r", "\\r")
+                .replace("\t", "\\t");
+    }
+
+    private String generateCallerTypes(CallerType[] callerTypes) {
+        if (callerTypes.length == 0) {
+            return "java.util.Collections.emptyList()";
+        }
+
+        StringBuilder builder = new StringBuilder();
+
+        builder.append("java.util.Arrays.asList(");
+
+        for (int i = 0; i < callerTypes.length; i++) {
+
+            if (i > 0) {
+                builder.append(", ");
+            }
+
+            builder.append("CallerType.").append(callerTypes[i].name());
+        }
+
+        builder.append(")");
+
+        return builder.toString();
+    }
+
+    private String generateStringList(String[] values) {
+        if (values.length == 0) {
+            return "java.util.Collections.emptyList()";
+        }
+
+        StringBuilder builder = new StringBuilder();
+
+        builder.append("java.util.Arrays.asList(");
+
+        for (int i = 0; i < values.length; i++) {
+
+            if (i > 0) {
+                builder.append(", ");
+            }
+
+            builder.append(quote(values[i]));
+        }
+
+        builder.append(")");
+
+        return builder.toString();
+    }
+
+    private static final class CapabilityMetadata {
+
+        private final String name;
+
+        private final String description;
+
+        private final boolean userInitiatedRequired;
+
+        private final CallerType[] allowedCallerTypes;
+
+        private final String[] requiredPermissions;
+
+        private CapabilityMetadata(String name, String description, boolean userInitiatedRequired,
+                                   CallerType[] allowedCallerTypes, String[] requiredPermissions) {
+            this.name = name;
+            this.description = description;
+            this.userInitiatedRequired = userInitiatedRequired;
+            this.allowedCallerTypes = allowedCallerTypes;
+            this.requiredPermissions = requiredPermissions;
         }
     }
 }

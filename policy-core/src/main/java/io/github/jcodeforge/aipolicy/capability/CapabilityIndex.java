@@ -3,14 +3,14 @@ package io.github.jcodeforge.aipolicy.capability;
 import java.util.List;
 
 /**
- * Provides classes containing AI capabilities.
+ * Provides the capabilities generated for an application.
  */
 public interface CapabilityIndex {
 
     /**
-     * Returns classes that may contain {@link AiCapability} methods.
+     * Returns all generated capabilities.
      *
-     * @return capability classes
+     * @return generated capabilities
      */
-    List<Class<?>> getCapabilityClasses();
+    List<Capability> getCapabilities();
 }

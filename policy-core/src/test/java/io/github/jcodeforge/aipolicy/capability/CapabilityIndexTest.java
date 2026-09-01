@@ -12,27 +12,40 @@ public class CapabilityIndexTest {
 
     private static final class TestCapabilityIndex implements CapabilityIndex {
 
+        private final Capability customer =
+                new Capability("customer.read", "Read customer information");
+
+        private final Capability invoice =
+                new Capability("invoice.read", "Read invoice information");
+
         @Override
-        public List<Class<?>> getCapabilityClasses() {
-            return Arrays.asList(CustomerService.class, InvoiceService.class);
+        public List<Capability> getCapabilities() {
+            return Arrays.asList(customer, invoice);
         }
     }
 
-    private static final class CustomerService {
-    }
+    @Test
+    public void returnsCapabilities() {
+        CapabilityIndex index = new TestCapabilityIndex();
 
-    private static final class InvoiceService {
+        List<Capability> capabilities = index.getCapabilities();
+
+        assertNotNull(capabilities);
+        assertEquals(2, capabilities.size());
+
+        assertEquals("customer.read", capabilities.get(0).getName());
+
+        assertEquals("invoice.read", capabilities.get(1).getName());
     }
 
     @Test
-    public void returnsCapabilityClasses() {
-        CapabilityIndex index = new TestCapabilityIndex();
+    public void returnsSameCapabilityInstances() {
+        TestCapabilityIndex index = new TestCapabilityIndex();
 
-        List<Class<?>> classes = index.getCapabilityClasses();
+        List<Capability> first = index.getCapabilities();
+        List<Capability> second = index.getCapabilities();
 
-        assertNotNull(classes);
-        assertEquals(2, classes.size());
-        assertSame(CustomerService.class, classes.get(0));
-        assertSame(InvoiceService.class, classes.get(1));
+        assertSame(first.get(0), second.get(0));
+        assertSame(first.get(1), second.get(1));
     }
 }
