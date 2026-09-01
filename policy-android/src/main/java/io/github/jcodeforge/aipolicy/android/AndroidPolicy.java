@@ -1,10 +1,9 @@
 package io.github.jcodeforge.aipolicy.android;
 
 import android.content.Context;
-import io.github.jcodeforge.aipolicy.capability.Capability;
-import java.util.Collection;
 import io.github.jcodeforge.aipolicy.ActionContext;
 import io.github.jcodeforge.aipolicy.AiPolicy;
+import io.github.jcodeforge.aipolicy.Decision;
 import io.github.jcodeforge.aipolicy.PolicyResult;
 import io.github.jcodeforge.aipolicy.android.provider.AndroidApplicationStateProvider;
 import io.github.jcodeforge.aipolicy.android.provider.AndroidCallerProvider;
@@ -13,7 +12,6 @@ import io.github.jcodeforge.aipolicy.android.provider.DefaultAndroidApplicationS
 import io.github.jcodeforge.aipolicy.android.provider.ExternalAndroidCallerProvider;
 import io.github.jcodeforge.aipolicy.android.provider.ProcessUidProvider;
 import io.github.jcodeforge.aipolicy.android.provider.SelfAndroidCallerProvider;
-import io.github.jcodeforge.aipolicy.capability.CapabilityProvider;
 import java.util.Objects;
 
 /**
@@ -31,6 +29,10 @@ import java.util.Objects;
  * <p>The Android-specific context and caller resolution are created
  * internally. Applications only need to provide an Android
  * {@link Context} and an {@link AiPolicy}.</p>
+ *
+ * <p>Capabilities are discovered and registered automatically by the
+ * Android integration. Applications do not need to create, initialize,
+ * or manage a capability registry.</p>
  */
 public final class AndroidPolicy {
 
@@ -38,17 +40,15 @@ public final class AndroidPolicy {
 
     private final AndroidActionContextFactory contextFactory;
 
-    private final CapabilityProvider capabilityProvider;
+    private final AndroidCapabilityRegistry capabilityRegistry;
 
     private AndroidPolicy(AiPolicy aiPolicy, AndroidActionContextFactory contextFactory,
-                          CapabilityProvider capabilityProvider) {
+                          AndroidCapabilityRegistry capabilityRegistry) {
         this.aiPolicy = Objects.requireNonNull(aiPolicy, "policy must not be null");
         this.contextFactory = Objects.requireNonNull(contextFactory,
                 "contextFactory must not be null");
-        this.capabilityProvider = Objects.requireNonNull(
-                capabilityProvider,
-                "capabilityProvider must not be null"
-        );
+        this.capabilityRegistry = Objects.requireNonNull(capabilityRegistry,
+                "capabilityProvider must not be null");
     }
 
     /**
@@ -118,50 +118,28 @@ public final class AndroidPolicy {
     /**
      * Evaluates a capability using the configured Android context.
      *
-     * @param capability capability to evaluate
+     * <p>The capability name is evaluated against the configured
+     * {@link AiPolicy}. The returned result describes whether the
+     * requested action is allowed.</p>
+     *
+     * <p>This method only evaluates the policy. It does not invoke
+     * the underlying application method associated with the capability.</p>
+     *
+     * @param capability capability name to evaluate
      * @param userInitiated whether the action was explicitly initiated
      *                      by the user
      * @return the result of the policy evaluation
      * @throws NullPointerException if {@code capability} is {@code null}
-     *                              and rejected by the underlying context
-     *                              factory
      */
     public PolicyResult evaluate(String capability, boolean userInitiated) {
+        Objects.requireNonNull(capability, "capability must not be null");
+
+        if (!capabilityRegistry.hasCapability(capability)) {
+            return new PolicyResult(Decision.DENY, "Unknown capability: " + capability);
+        }
+
         ActionContext context = contextFactory.create(capability, userInitiated);
 
         return aiPolicy.evaluate(context);
-    }
-
-    /**
-     * Returns all capabilities discovered in the application.
-     *
-     * <p>Capabilities are discovered and registered automatically when the
-     * application starts. The returned collection represents the capabilities
-     * currently available to the application.</p>
-     *
-     * @return all discovered capabilities; never {@code null}
-     */
-    public Collection<Capability> getCapabilities() {
-        return capabilityProvider.getCapabilities();
-    }
-
-    /**
-     * Returns a capability by name.
-     *
-     * @param name the capability name
-     * @return the capability, or {@code null} if no such capability exists
-     */
-    public Capability getCapability(String name) {
-        return capabilityProvider.getCapability(name);
-    }
-
-    /**
-     * Determines whether a capability is registered.
-     *
-     * @param name the capability name
-     * @return {@code true} if the capability exists
-     */
-    public boolean hasCapability(String name) {
-        return capabilityProvider.hasCapability(name);
     }
 }

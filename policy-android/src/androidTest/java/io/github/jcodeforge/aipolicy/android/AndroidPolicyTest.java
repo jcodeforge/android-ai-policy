@@ -14,11 +14,8 @@ import io.github.jcodeforge.aipolicy.condition.UserInitiatedCondition;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import androidx.test.platform.app.InstrumentationRegistry;
 
@@ -191,66 +188,17 @@ public class AndroidPolicyTest {
     }
 
     @Test
-    public void returnsDiscoveredCapabilities() {
-        InstrumentationRegistry.getInstrumentation().runOnMainSync(new Runnable() {
-            @Override
-            public void run() {
-                AiPolicy aiPolicy = AiPolicy.builder()
-                        .addRule("customer.read", new PolicyRule(Decision.ALLOW, null))
-                        .build();
-
-                AndroidPolicy policy = AndroidPolicy.forSelfCalls(context, aiPolicy);
-
-                assertNotNull(policy.getCapabilities());
-                assertFalse(policy.getCapabilities().isEmpty());
-            }
-        });
-    }
-
-    @Test
-    public void returnsCapabilityByName() {
-        InstrumentationRegistry.getInstrumentation().runOnMainSync(new Runnable() {
-            @Override
-            public void run() {
-                AiPolicy aiPolicy = AiPolicy.builder()
-                        .addRule("customer.read",
-                                new PolicyRule(Decision.ALLOW, null))
-                        .build();
-
-                AndroidPolicy policy = AndroidPolicy.forSelfCalls(context, aiPolicy);
-
-                assertNotNull(policy.getCapability("customer.read"));
-                assertEquals("customer.read", policy.getCapability("customer.read").getName());
-            }
-        });
-    }
-
-    @Test
-    public void checksCapabilityExistence() {
-        InstrumentationRegistry.getInstrumentation().runOnMainSync(new Runnable() {
-            @Override
-            public void run() {
-                AiPolicy aiPolicy = AiPolicy.builder()
-                        .addRule("customer.read", new PolicyRule(Decision.ALLOW, null))
-                        .build();
-
-                AndroidPolicy policy = AndroidPolicy.forSelfCalls(context, aiPolicy);
-
-                assertTrue(policy.hasCapability("customer.read"));
-            }
-        });
-    }
-
-    @Test
-    public void returnsNullForUnknownCapability() {
+    public void deniesUnknownCapability() {
         InstrumentationRegistry.getInstrumentation().runOnMainSync(new Runnable() {
             @Override
             public void run() {
                 AiPolicy aiPolicy = AiPolicy.builder().build();
 
                 AndroidPolicy policy = AndroidPolicy.forSelfCalls(context, aiPolicy);
+                PolicyResult result = policy.evaluate("does.not.exist", true);
 
-                assertNull(policy.getCapability("does.not.exist"));
+                assertTrue(result.isDenied());
+                assertEquals("Unknown capability: does.not.exist", result.getReason());
             }
         });
     }

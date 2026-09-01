@@ -8,10 +8,9 @@ import io.github.jcodeforge.aipolicy.capability.Capability;
 import io.github.jcodeforge.aipolicy.capability.CapabilityDiscovery;
 import io.github.jcodeforge.aipolicy.capability.CapabilityIndex;
 import io.github.jcodeforge.aipolicy.capability.CapabilityIndexProvider;
-import io.github.jcodeforge.aipolicy.capability.CapabilityProvider;
 import io.github.jcodeforge.aipolicy.capability.CapabilityRegistry;
 
-final class AndroidCapabilityRegistry implements CapabilityProvider {
+final class AndroidCapabilityRegistry {
 
     private static final AndroidCapabilityRegistry INSTANCE = new AndroidCapabilityRegistry();
 
@@ -50,17 +49,14 @@ final class AndroidCapabilityRegistry implements CapabilityProvider {
         initialized = true;
     }
 
-    @Override
     public Collection<Capability> getCapabilities() {
         return registry.getAll();
     }
 
-    @Override
     public Capability getCapability(String name) {
         return registry.get(name);
     }
 
-    @Override
     public boolean hasCapability(String name) {
         return registry.contains(name);
     }
