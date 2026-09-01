@@ -1,7 +1,6 @@
 package io.github.jcodeforge.aipolicy.android;
 
 import android.content.Context;
-
 import io.github.jcodeforge.aipolicy.capability.Capability;
 import java.util.Collection;
 import io.github.jcodeforge.aipolicy.ActionContext;
@@ -14,6 +13,7 @@ import io.github.jcodeforge.aipolicy.android.provider.DefaultAndroidApplicationS
 import io.github.jcodeforge.aipolicy.android.provider.ExternalAndroidCallerProvider;
 import io.github.jcodeforge.aipolicy.android.provider.ProcessUidProvider;
 import io.github.jcodeforge.aipolicy.android.provider.SelfAndroidCallerProvider;
+import io.github.jcodeforge.aipolicy.capability.CapabilityProvider;
 import java.util.Objects;
 
 /**
@@ -38,10 +38,17 @@ public final class AndroidPolicy {
 
     private final AndroidActionContextFactory contextFactory;
 
-    private AndroidPolicy(AiPolicy aiPolicy, AndroidActionContextFactory contextFactory) {
+    private final CapabilityProvider capabilityProvider;
+
+    private AndroidPolicy(AiPolicy aiPolicy, AndroidActionContextFactory contextFactory,
+                          CapabilityProvider capabilityProvider) {
         this.aiPolicy = Objects.requireNonNull(aiPolicy, "policy must not be null");
         this.contextFactory = Objects.requireNonNull(contextFactory,
                 "contextFactory must not be null");
+        this.capabilityProvider = Objects.requireNonNull(
+                capabilityProvider,
+                "capabilityProvider must not be null"
+        );
     }
 
     /**
@@ -71,7 +78,7 @@ public final class AndroidPolicy {
         AndroidActionContextFactory contextFactory = new AndroidActionContextFactory(stateProvider,
                 callerProvider);
 
-        return new AndroidPolicy(aiPolicy, contextFactory);
+        return new AndroidPolicy(aiPolicy, contextFactory, AndroidCapabilityRegistry.getInstance());
     }
 
     /**
@@ -105,7 +112,7 @@ public final class AndroidPolicy {
         AndroidActionContextFactory contextFactory = new AndroidActionContextFactory(stateProvider,
                 callerProvider);
 
-        return new AndroidPolicy(aiPolicy, contextFactory);
+        return new AndroidPolicy(aiPolicy, contextFactory, AndroidCapabilityRegistry.getInstance());
     }
 
     /**
@@ -135,7 +142,7 @@ public final class AndroidPolicy {
      * @return all discovered capabilities; never {@code null}
      */
     public Collection<Capability> getCapabilities() {
-        return AndroidCapabilityRegistry.getInstance().getCapabilities();
+        return capabilityProvider.getCapabilities();
     }
 
     /**
@@ -145,7 +152,7 @@ public final class AndroidPolicy {
      * @return the capability, or {@code null} if no such capability exists
      */
     public Capability getCapability(String name) {
-        return AndroidCapabilityRegistry.getInstance().getCapability(name);
+        return capabilityProvider.getCapability(name);
     }
 
     /**
@@ -155,6 +162,6 @@ public final class AndroidPolicy {
      * @return {@code true} if the capability exists
      */
     public boolean hasCapability(String name) {
-        return AndroidCapabilityRegistry.getInstance().hasCapability(name);
+        return capabilityProvider.hasCapability(name);
     }
 }
