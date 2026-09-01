@@ -2,6 +2,7 @@ package io.github.jcodeforge.aipolicy.capability;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -35,7 +36,10 @@ public final class CapabilityDiscovery {
                 continue;
             }
 
-            capabilities.add(new Capability(annotation.name(), annotation.description()));
+            capabilities.add(new Capability(annotation.name(), annotation.description(),
+                    annotation.userInitiatedRequired(), Arrays.asList(annotation.allowedCallerTypes()),
+                    Arrays.asList(annotation.requiredPermissions())
+            ));
         }
 
         return capabilities;

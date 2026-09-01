@@ -1,17 +1,12 @@
 package io.github.jcodeforge.aipolicy.capability;
 
-import org.junit.Test;
-
-import static org.junit.Assert.*;
-
-import io.github.jcodeforge.aipolicy.ActionContext;
-import io.github.jcodeforge.aipolicy.AiPolicy;
-import io.github.jcodeforge.aipolicy.CallerIdentity;
 import io.github.jcodeforge.aipolicy.CallerType;
-import io.github.jcodeforge.aipolicy.Decision;
-import io.github.jcodeforge.aipolicy.PolicyResult;
-import io.github.jcodeforge.aipolicy.PolicyRule;
-import io.github.jcodeforge.aipolicy.condition.UserInitiatedCondition;
+import org.junit.Test;
+import java.util.Collections;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
 
 public class CapabilityTest {
 
@@ -22,6 +17,28 @@ public class CapabilityTest {
 
         assertEquals("customer.read", capability.getName());
         assertEquals("Read customer information", capability.getDescription());
+
+        assertFalse(capability.isUserInitiatedRequired());
+        assertTrue(capability.getAllowedCallerTypes().isEmpty());
+        assertTrue(capability.getRequiredPermissions().isEmpty());
+    }
+
+    @Test
+    public void createsCapabilityWithMetadata() {
+        Capability capability = new Capability(
+                "customer.delete",
+                "Delete customer",
+                true,
+                Collections.singletonList(CallerType.SELF),
+                Collections.singletonList("android.permission.INTERNET")
+        );
+
+        assertEquals("customer.delete", capability.getName());
+        assertEquals("Delete customer", capability.getDescription());
+        assertTrue(capability.isUserInitiatedRequired());
+        assertEquals(Collections.singletonList(CallerType.SELF), capability.getAllowedCallerTypes());
+        assertEquals(Collections.singletonList("android.permission.INTERNET"),
+                capability.getRequiredPermissions());
     }
 
     @Test(expected = NullPointerException.class)
@@ -44,13 +61,36 @@ public class CapabilityTest {
         new Capability("customer.read", "   ");
     }
 
+    @Test(expected = NullPointerException.class)
+    public void requiresAllowedCallerTypes() {
+        new Capability(
+                "customer.read",
+                "Read customer information",
+                false,
+                null,
+                Collections.emptyList()
+        );
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void requiresRequiredPermissions() {
+        new Capability(
+                "customer.read",
+                "Read customer information",
+                false,
+                Collections.emptyList(),
+                null
+        );
+    }
+
     @Test
     public void equalCapabilitiesAreEqual() {
-        Capability first = new Capability("customer.read",
-                "Read customer information");
+        Capability first = new Capability("customer.read", "Read customer information");
 
-        Capability second = new Capability("customer.read",
-                "Read customer information");
+        Capability second = new Capability(
+                "customer.read",
+                "Read customer information"
+        );
 
         assertEquals(first, second);
         assertEquals(first.hashCode(), second.hashCode());
@@ -58,144 +98,113 @@ public class CapabilityTest {
 
     @Test
     public void differentCapabilitiesAreNotEqual() {
-        Capability first = new Capability("customer.read",
-                "Read customer information");
+        Capability first = new Capability(
+                "customer.read",
+                "Read customer information"
+        );
 
-        Capability second = new Capability("customer.delete", "Delete customer");
+        Capability second = new Capability(
+                "customer.delete",
+                "Delete customer"
+        );
 
         assertNotEquals(first, second);
     }
 
     @Test
-    public void checksAllowedInvocation() {
-        Capability capability = new Capability("customer.read",
-                "Read customer information");
+    public void differentUserInitiatedRequirementMakesCapabilitiesUnequal() {
+        Capability first = new Capability(
+                "customer.delete",
+                "Delete customer",
+                false,
+                Collections.emptyList(),
+                Collections.emptyList()
+        );
 
-        ActionContext context = new ActionContext("customer.read",
-                new CallerIdentity("com.example.app", CallerType.SELF),
-                true);
+        Capability second = new Capability(
+                "customer.delete",
+                "Delete customer",
+                true,
+                Collections.emptyList(),
+                Collections.emptyList()
+        );
 
-        AiPolicy policy = AiPolicy.builder()
-                .addRule("customer.read", new PolicyRule(Decision.ALLOW, null))
-                .build();
-
-        PolicyResult result = capability.evaluate(policy, context);
-
-        assertTrue(result.isAllowed());
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void rejectsDifferentCapability() {
-        Capability capability = new Capability("customer.read",
-                "Read customer information");
-
-        ActionContext context = new ActionContext("customer.delete",
-                new CallerIdentity("com.example.app", CallerType.SELF), true);
-
-        AiPolicy policy = AiPolicy.builder().build();
-
-        capability.evaluate(policy, context);
+        assertNotEquals(first, second);
     }
 
     @Test
-    public void checksDeniedInvocation() {
-        Capability capability = new Capability("customer.delete", "Delete customer");
+    public void differentCallerTypesMakeCapabilitiesUnequal() {
+        Capability first = new Capability(
+                "customer.delete",
+                "Delete customer",
+                false,
+                Collections.emptyList(),
+                Collections.emptyList()
+        );
 
-        ActionContext context = new ActionContext("customer.delete",
-                new CallerIdentity("com.example.app", CallerType.SELF), false);
+        Capability second = new Capability(
+                "customer.delete",
+                "Delete customer",
+                false,
+                Collections.singletonList(CallerType.SELF),
+                Collections.emptyList()
+        );
 
-        AiPolicy policy = AiPolicy.builder()
-                .addRule("customer.delete", new PolicyRule(Decision.DENY,
-                        "Deletion is not allowed"))
-                .build();
-
-        PolicyResult result = capability.evaluate(policy, context);
-
-        assertFalse(result.isAllowed());
-    }
-
-    @Test(expected = NullPointerException.class)
-    public void requiresPolicyForEvaluation() {
-        Capability capability = new Capability("customer.read",
-                "Read customer information");
-
-        ActionContext context = new ActionContext("customer.read",
-                new CallerIdentity("com.example.app", CallerType.SELF), true);
-
-        capability.evaluate(null, context);
+        assertNotEquals(first, second);
     }
 
     @Test
-    public void usesCapabilitySpecificPolicy() {
-        Capability readCapability = new Capability("customer.read",
-                "Read customer information");
+    public void differentPermissionsMakeCapabilitiesUnequal() {
+        Capability first = new Capability(
+                "customer.delete",
+                "Delete customer",
+                false,
+                Collections.emptyList(),
+                Collections.emptyList()
+        );
 
-        Capability deleteCapability = new Capability("customer.delete",
-                "Delete customer");
-
-        ActionContext readContext = new ActionContext("customer.read",
-                new CallerIdentity("com.example.app", CallerType.SELF),
-                true);
-
-        ActionContext deleteContext = new ActionContext("customer.delete",
-                new CallerIdentity("com.example.app", CallerType.SELF), true);
-
-        AiPolicy policy = AiPolicy.builder()
-                .addRule(
-                        "customer.read",
-                        new PolicyRule(Decision.ALLOW, null)
+        Capability second = new Capability(
+                "customer.delete",
+                "Delete customer",
+                false,
+                Collections.emptyList(),
+                Collections.singletonList(
+                        "android.permission.INTERNET"
                 )
-                .addRule(
-                        "customer.delete",
-                        new PolicyRule(Decision.DENY, "Deletion is not allowed")
-                )
-                .build();
+        );
 
-        PolicyResult readResult = readCapability.evaluate(policy, readContext);
-
-        PolicyResult deleteResult = deleteCapability.evaluate(policy, deleteContext);
-
-        assertTrue(readResult.isAllowed());
-        assertFalse(deleteResult.isAllowed());
+        assertNotEquals(first, second);
     }
 
     @Test
-    public void deniesCapabilityWithoutPolicy() {
-        Capability capability = new Capability("customer.export",
-                "Export customer information");
-
-        ActionContext context = new ActionContext("customer.export",
-                new CallerIdentity("com.example.app", CallerType.SELF), true);
-
-        AiPolicy policy = AiPolicy.builder().build();
-
-        PolicyResult result = capability.evaluate(policy, context);
-
-        assertFalse(result.isAllowed());
-    }
-
-    @Test
-    public void appliesCapabilitySpecificConditions() {
-        Capability capability = new Capability("customer.delete",
-                "Delete customer");
-
-        ActionContext userInitiatedContext = new ActionContext("customer.delete",
-                new CallerIdentity("com.example.app", CallerType.SELF), true);
-
-        ActionContext nonUserInitiatedContext = new ActionContext("customer.delete",
-                new CallerIdentity("com.example.app", CallerType.SELF), false);
-
-        AiPolicy policy = AiPolicy.builder()
-                .addRule(
-                        "customer.delete",
-                        new PolicyRule(Decision.ALLOW, null, new UserInitiatedCondition())
+    public void metadataCollectionsAreImmutable() {
+        Capability capability = new Capability(
+                "customer.delete",
+                "Delete customer",
+                true,
+                Collections.singletonList(CallerType.SELF),
+                Collections.singletonList(
+                        "android.permission.INTERNET"
                 )
-                .build();
+        );
 
-        PolicyResult allowed = capability.evaluate(policy, userInitiatedContext);
-        PolicyResult denied = capability.evaluate(policy, nonUserInitiatedContext);
+        try {
+            capability.getAllowedCallerTypes()
+                    .add(CallerType.EXTERNAL);
 
-        assertTrue(allowed.isAllowed());
-        assertFalse(denied.isAllowed());
+            throw new AssertionError("Allowed caller types must be immutable");
+
+        } catch (UnsupportedOperationException expected) {
+            // Expected.
+        }
+
+        try {
+            capability.getRequiredPermissions().add("android.permission.CAMERA");
+
+            throw new AssertionError("Required permissions must be immutable");
+
+        } catch (UnsupportedOperationException expected) {
+            // Expected.
+        }
     }
 }

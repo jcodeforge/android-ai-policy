@@ -1,9 +1,11 @@
 package io.github.jcodeforge.aipolicy.capability;
 
+import io.github.jcodeforge.aipolicy.CallerType;
 import org.junit.Test;
 import java.util.List;
-
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class CapabilityDiscoveryTest {
 
@@ -16,7 +18,14 @@ public class CapabilityDiscoveryTest {
 
     @AiCapability(
             name = "customer.delete",
-            description = "Delete customer"
+            description = "Delete customer",
+            userInitiatedRequired = true,
+            allowedCallerTypes = {
+                    CallerType.SELF
+            },
+            requiredPermissions = {
+                    "android.permission.INTERNET"
+            }
     )
     public void deleteCustomer() {
     }
@@ -24,29 +33,38 @@ public class CapabilityDiscoveryTest {
     public void internalMethod() {
     }
 
-    // Java reflection does not guarantee any order. We need to find it explicitly
     @Test
-    public void discoversAnnotatedMethods() {
+    public void discoversCapabilityMetadata() {
+        CapabilityDiscovery discovery = new CapabilityDiscovery();
+
+        List<Capability> capabilities =
+                discovery.discover(CapabilityDiscoveryTest.class);
+
+        assertEquals(2, capabilities.size());
+
+        Capability deleteCapability = findCapability(capabilities, "customer.delete");
+
+        assertEquals("Delete customer", deleteCapability.getDescription());
+
+        assertTrue(deleteCapability.isUserInitiatedRequired());
+
+        assertEquals(List.of(CallerType.SELF), deleteCapability.getAllowedCallerTypes());
+
+        assertEquals(List.of("android.permission.INTERNET"), deleteCapability.getRequiredPermissions());
+    }
+
+    @Test
+    public void usesDefaultMetadata() {
         CapabilityDiscovery discovery = new CapabilityDiscovery();
 
         List<Capability> capabilities = discovery.discover(CapabilityDiscoveryTest.class);
 
-        assertEquals(2, capabilities.size());
+        Capability readCapability = findCapability(capabilities, "customer.read");
 
-        Capability read = capabilities.stream()
-                .filter(capability ->
-                        "customer.read".equals(capability.getName()))
-                .findFirst()
-                .orElseThrow(AssertionError::new);
-
-        Capability delete = capabilities.stream()
-                .filter(capability ->
-                        "customer.delete".equals(capability.getName()))
-                .findFirst()
-                .orElseThrow(AssertionError::new);
-
-        assertEquals("Read customer information", read.getDescription());
-        assertEquals("Delete customer", delete.getDescription());
+        assertEquals("Read customer information", readCapability.getDescription());
+        assertFalse(readCapability.isUserInitiatedRequired());
+        assertTrue(readCapability.getAllowedCallerTypes().isEmpty());
+        assertTrue(readCapability.getRequiredPermissions().isEmpty());
     }
 
     @Test
@@ -64,12 +82,22 @@ public class CapabilityDiscoveryTest {
 
         List<Capability> capabilities = discovery.discover(EmptyService.class);
 
-        assertEquals(0, capabilities.size());
+        assertTrue(capabilities.isEmpty());
     }
 
     @Test(expected = NullPointerException.class)
     public void requiresType() {
         new CapabilityDiscovery().discover(null);
+    }
+
+    private static Capability findCapability(List<Capability> capabilities, String name) {
+        for (Capability capability : capabilities) {
+            if (capability.getName().equals(name)) {
+                return capability;
+            }
+        }
+
+        throw new AssertionError("Capability not found: " + name);
     }
 
     private static final class EmptyService {
