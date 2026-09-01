@@ -8,5 +8,7 @@ java {
 }
 
 dependencies {
+    implementation(project(":policy-core"))
+
     testImplementation(libs.junit)
 }
