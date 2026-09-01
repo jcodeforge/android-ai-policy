@@ -3,24 +3,71 @@ package io.github.jcodeforge.aipolicy.android;
 import android.content.Context;
 import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
-import io.github.jcodeforge.aipolicy.AiPolicy;
-import io.github.jcodeforge.aipolicy.Decision;
+import androidx.test.platform.app.InstrumentationRegistry;
+import io.github.jcodeforge.aipolicy.CallerType;
 import io.github.jcodeforge.aipolicy.PolicyResult;
-import io.github.jcodeforge.aipolicy.PolicyRule;
-import io.github.jcodeforge.aipolicy.android.condition.AndroidPermissionCondition;
-import io.github.jcodeforge.aipolicy.condition.AndCondition;
-import io.github.jcodeforge.aipolicy.condition.CallerCondition;
-import io.github.jcodeforge.aipolicy.condition.UserInitiatedCondition;
+import io.github.jcodeforge.aipolicy.capability.AiCapability;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import androidx.test.platform.app.InstrumentationRegistry;
 
 @RunWith(AndroidJUnit4.class)
 public class AndroidPolicyTest {
+
+    /**
+     * Test capabilities discovered by the annotation processor.
+     */
+    public static final class TestCapabilities {
+
+        @AiCapability(
+                name = "test.customer.read",
+                description = "Read customer information"
+        )
+        public void readCustomer() {
+        }
+
+        @AiCapability(
+                name = "test.customer.delete",
+                description = "Delete customer",
+                userInitiatedRequired = true
+        )
+        public void deleteCustomer() {
+        }
+
+        @AiCapability(
+                name = "test.customer.permission",
+                description = "Access protected customer information",
+                requiredPermissions = {
+                        "android.permission.INTERNET"
+                }
+        )
+        public void accessProtectedCustomerInformation() {
+        }
+
+        @AiCapability(
+                name = "test.customer.camera",
+                description = "Access camera",
+                requiredPermissions = {
+                        "android.permission.CAMERA"
+                }
+        )
+        public void accessCamera() {
+        }
+
+        @AiCapability(
+                name = "customer.self",
+                description = "Self-only customer operation",
+                allowedCallerTypes = {
+                        CallerType.SELF
+                }
+        )
+        public void selfOnlyOperation() {
+        }
+    }
 
     private Context context;
 
@@ -31,16 +78,12 @@ public class AndroidPolicyTest {
 
     @Test(expected = NullPointerException.class)
     public void requiresContext() {
-        AiPolicy aiPolicy = AiPolicy.builder()
-                .addRule("customer.read", new PolicyRule(Decision.ALLOW, null))
-                .build();
-
-        AndroidPolicy.forSelfCalls(null, aiPolicy);
-    }
-
-    @Test(expected = NullPointerException.class)
-    public void requiresPolicy() {
-        AndroidPolicy.forSelfCalls(context, null);
+        InstrumentationRegistry.getInstrumentation().runOnMainSync(new Runnable() {
+            @Override
+            public void run() {
+                AndroidPolicy.forSelfCalls(null);
+            }
+        });
     }
 
     @Test
@@ -48,12 +91,7 @@ public class AndroidPolicyTest {
         InstrumentationRegistry.getInstrumentation().runOnMainSync(new Runnable() {
             @Override
             public void run() {
-                AiPolicy aiPolicy = AiPolicy.builder()
-                        .addRule("customer.read", new PolicyRule(Decision.ALLOW, null))
-                        .build();
-
-                AndroidPolicy policy = AndroidPolicy.forSelfCalls(context, aiPolicy);
-
+                AndroidPolicy policy = AndroidPolicy.forSelfCalls(context);
                 assertNotNull(policy);
             }
         });
@@ -64,16 +102,9 @@ public class AndroidPolicyTest {
         InstrumentationRegistry.getInstrumentation().runOnMainSync(new Runnable() {
             @Override
             public void run() {
-                String packageName = context.getPackageName();
+                AndroidPolicy policy = AndroidPolicy.forSelfCalls(context);
 
-                AiPolicy aiPolicy = AiPolicy.builder()
-                        .addRule("customer.read", new PolicyRule(Decision.ALLOW, null,
-                                new CallerCondition(packageName)))
-                        .build();
-
-                AndroidPolicy policy = AndroidPolicy.forSelfCalls(context, aiPolicy);
-
-                PolicyResult result = policy.evaluate("customer.read", true);
+                PolicyResult result = policy.evaluate("test.customer.read", true);
 
                 assertTrue(result.isAllowed());
             }
@@ -81,26 +112,35 @@ public class AndroidPolicyTest {
     }
 
     @Test
-    public void evaluatesSelfCallWithMultipleConditions() {
+    public void evaluatesUserInitiatedCapability() {
         InstrumentationRegistry.getInstrumentation().runOnMainSync(new Runnable() {
             @Override
             public void run() {
-                String packageName = context.getPackageName();
+                AndroidPolicy policy = AndroidPolicy.forSelfCalls(context);
 
-                AiPolicy aiPolicy = AiPolicy.builder()
-                        .addRule("customer.delete", new PolicyRule(Decision.ALLOW, null,
-                                new AndCondition(new CallerCondition(packageName),
-                                        new UserInitiatedCondition()))
-                        )
-                        .build();
-
-                AndroidPolicy policy = AndroidPolicy.forSelfCalls(context, aiPolicy);
-
-                PolicyResult result = policy.evaluate("customer.delete", true);
+                PolicyResult result = policy.evaluate("test.customer.delete", true);
 
                 assertTrue(result.isAllowed());
             }
         });
+
+    }
+
+    @Test
+    public void deniesUserInitiatedCapabilityWhenNotUserInitiated() {
+        InstrumentationRegistry.getInstrumentation().runOnMainSync(new Runnable() {
+            @Override
+            public void run() {
+                AndroidPolicy policy = AndroidPolicy.forSelfCalls(context);
+
+                PolicyResult result = policy.evaluate("test.customer.delete", false);
+
+                assertTrue(result.isDenied());
+
+                assertEquals("Capability requires user initiation", result.getReason());
+            }
+        });
+
     }
 
     @Test
@@ -108,12 +148,7 @@ public class AndroidPolicyTest {
         InstrumentationRegistry.getInstrumentation().runOnMainSync(new Runnable() {
             @Override
             public void run() {
-                AiPolicy aiPolicy = AiPolicy.builder()
-                        .addRule("customer.read", new PolicyRule(Decision.ALLOW,
-                                null))
-                        .build();
-
-                AndroidPolicy policy = AndroidPolicy.forExternalCalls(context, aiPolicy);
+                AndroidPolicy policy = AndroidPolicy.forExternalCalls(context);
 
                 assertNotNull(policy);
             }
@@ -121,70 +156,46 @@ public class AndroidPolicyTest {
     }
 
     @Test(expected = NullPointerException.class)
-    public void externalCallsRequiresContext() {
+    public void externalCallsRequireContext() {
         InstrumentationRegistry.getInstrumentation().runOnMainSync(new Runnable() {
             @Override
             public void run() {
-                AiPolicy aiPolicy = AiPolicy.builder()
-                        .addRule("customer.read", new PolicyRule(Decision.ALLOW, null))
-                        .build();
-
-                AndroidPolicy.forExternalCalls(null, aiPolicy);
-            }
-        });
-
-    }
-
-    @Test(expected = NullPointerException.class)
-    public void externalCallsRequiresPolicy() {
-        InstrumentationRegistry.getInstrumentation().runOnMainSync(new Runnable() {
-            @Override
-            public void run() {
-                AndroidPolicy.forExternalCalls(context, null);
+                AndroidPolicy.forExternalCalls(null);
             }
         });
     }
 
     @Test
-    public void evaluatesPermissionCondition() {
+    public void evaluatesRequiredPermission() {
         InstrumentationRegistry.getInstrumentation().runOnMainSync(new Runnable() {
             @Override
             public void run() {
-                AiPolicy aiPolicy = AiPolicy.builder()
-                        .addRule("customer.delete", new PolicyRule(Decision.ALLOW,
-                                null,
-                                new AndroidPermissionCondition(context, "android.permission.INTERNET"))
-                        )
-                        .build();
+                AndroidPolicy policy =
+                        AndroidPolicy.forSelfCalls(context);
 
-                        AndroidPolicy policy = AndroidPolicy.forSelfCalls(context, aiPolicy);
+                PolicyResult result =
+                        policy.evaluate("test.customer.permission", true);
 
-                        PolicyResult result = policy.evaluate("customer.delete", true);
-
-                        assertTrue(result.isAllowed());
-                    }
+                assertTrue(result.isAllowed());
+            }
         });
     }
 
     @Test
-    public void deniesWhenPermissionIsMissing() {
+    public void deniesWhenRequiredPermissionIsMissing() {
         InstrumentationRegistry.getInstrumentation().runOnMainSync(new Runnable() {
             @Override
             public void run() {
-                AiPolicy aiPolicy = AiPolicy.builder()
-                        .addRule("customer.delete", new PolicyRule(Decision.ALLOW,
-                                        null, new AndroidPermissionCondition(context,
-                                        "android.permission.CAMERA")))
-                        .build();
+                AndroidPolicy policy = AndroidPolicy.forSelfCalls(context);
 
-                        AndroidPolicy policy = AndroidPolicy.forSelfCalls(context, aiPolicy);
+                PolicyResult result = policy.evaluate("test.customer.camera", true);
 
-                        PolicyResult result = policy.evaluate("customer.delete",
-                                true);
+                assertTrue(result.isDenied());
 
-                        assertTrue(result.isDenied());
-                    }
-                });
+                assertEquals("Required permission is missing: android.permission.CAMERA",
+                        result.getReason());
+            }
+        });
     }
 
     @Test
@@ -192,13 +203,14 @@ public class AndroidPolicyTest {
         InstrumentationRegistry.getInstrumentation().runOnMainSync(new Runnable() {
             @Override
             public void run() {
-                AiPolicy aiPolicy = AiPolicy.builder().build();
+                AndroidPolicy policy = AndroidPolicy.forSelfCalls(context);
 
-                AndroidPolicy policy = AndroidPolicy.forSelfCalls(context, aiPolicy);
                 PolicyResult result = policy.evaluate("does.not.exist", true);
 
                 assertTrue(result.isDenied());
-                assertEquals("Unknown capability: does.not.exist", result.getReason());
+
+                assertEquals("Unknown capability: does.not.exist", result.getReason()
+                );
             }
         });
     }

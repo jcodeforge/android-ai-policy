@@ -2,15 +2,6 @@ package io.github.jcodeforge.aipolicy;
 
 import java.util.Objects;
 
-/**
- * Describes the context in which an action is requested.
- *
- * <p>An action context is supplied to {@link AiPolicy} during policy
- * evaluation and provides the information that policy conditions can
- * inspect.</p>
- *
- * <p>An {@code ActionContext} is immutable after construction.</p>
- */
 public final class ActionContext {
 
     private final String capability;

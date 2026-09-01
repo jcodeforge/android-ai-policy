@@ -2,7 +2,7 @@ package io.github.jcodeforge.aipolicy.android;
 
 import android.content.Context;
 import io.github.jcodeforge.aipolicy.ActionContext;
-import io.github.jcodeforge.aipolicy.AiPolicy;
+import io.github.jcodeforge.aipolicy.CallerType;
 import io.github.jcodeforge.aipolicy.Decision;
 import io.github.jcodeforge.aipolicy.PolicyResult;
 import io.github.jcodeforge.aipolicy.android.provider.AndroidApplicationStateProvider;
@@ -12,61 +12,56 @@ import io.github.jcodeforge.aipolicy.android.provider.DefaultAndroidApplicationS
 import io.github.jcodeforge.aipolicy.android.provider.ExternalAndroidCallerProvider;
 import io.github.jcodeforge.aipolicy.android.provider.ProcessUidProvider;
 import io.github.jcodeforge.aipolicy.android.provider.SelfAndroidCallerProvider;
+import io.github.jcodeforge.aipolicy.capability.Capability;
 import java.util.Objects;
+import android.content.pm.PackageManager;
+import android.os.Binder;
 
 /**
- * Android integration for {@link AiPolicy}.
+ * Android integration for AI capability policy evaluation.
  *
- * <p>{@code AndroidPolicy} provides the Android-specific context required
- * for policy evaluation, including the caller identity and application
- * lifecycle state.</p>
+ * <p>Capabilities are declared using {@link
+ * io.github.jcodeforge.aipolicy.capability.AiCapability} and registered
+ * automatically by the Android integration.</p>
  *
- * <p>Use {@link #forSelfCalls(Context, AiPolicy)} when evaluating actions
- * initiated by the application itself. Use
- * {@link #forExternalCalls(Context, AiPolicy)} when evaluating calls
- * received from an external Android Binder caller.</p>
- *
- * <p>The Android-specific context and caller resolution are created
- * internally. Applications only need to provide an Android
- * {@link Context} and an {@link AiPolicy}.</p>
- *
- * <p>Capabilities are discovered and registered automatically by the
- * Android integration. Applications do not need to create, initialize,
- * or manage a capability registry.</p>
+ * <p>This class evaluates whether a capability may be used in the current
+ * Android context. It does not invoke the underlying application method.</p>
  */
 public final class AndroidPolicy {
 
-    private final AiPolicy aiPolicy;
+    private final Context context;
 
     private final AndroidActionContextFactory contextFactory;
 
     private final AndroidCapabilityRegistry capabilityRegistry;
 
-    private AndroidPolicy(AiPolicy aiPolicy, AndroidActionContextFactory contextFactory,
-                          AndroidCapabilityRegistry capabilityRegistry) {
-        this.aiPolicy = Objects.requireNonNull(aiPolicy, "policy must not be null");
+    private final BinderCallingUidProvider callingUidProvider;
+
+    private final boolean isExternalCall;
+
+    private AndroidPolicy(Context context, AndroidActionContextFactory contextFactory,
+                          AndroidCapabilityRegistry capabilityRegistry,
+                          BinderCallingUidProvider callingUidProvider, boolean isExternalCall) {
+
+        this.context = Objects.requireNonNull(context, "context must not be null");
         this.contextFactory = Objects.requireNonNull(contextFactory,
                 "contextFactory must not be null");
         this.capabilityRegistry = Objects.requireNonNull(capabilityRegistry,
                 "capabilityProvider must not be null");
+        this.callingUidProvider = callingUidProvider;
+        this.isExternalCall = isExternalCall;
     }
 
     /**
-     * Creates an {@code AndroidPolicy} for actions initiated by the
-     * application itself.
+     * Creates an Android policy for actions initiated by the application
+     * itself.
      *
-     * <p>The resulting policy identifies the current application as
-     * {@link AndroidCallerType#SELF}.</p>
-     *
-     * @param context Android context used to obtain the application context
-     * @param aiPolicy policy to evaluate
-     * @return an Android policy configured for self-initiated calls
-     * @throws NullPointerException if {@code context} or {@code aiPolicy}
-     *                              is {@code null}
+     * @param context Android context
+     * @return policy configured for self-initiated calls
+     * @throws NullPointerException if {@code context} is {@code null}
      */
-    public static AndroidPolicy forSelfCalls(Context context, AiPolicy aiPolicy) {
+    public static AndroidPolicy forSelfCalls(Context context) {
         Objects.requireNonNull(context, "context must not be null");
-        Objects.requireNonNull(aiPolicy, "policy must not be null");
 
         Context applicationContext = context.getApplicationContext();
 
@@ -78,26 +73,20 @@ public final class AndroidPolicy {
         AndroidActionContextFactory contextFactory = new AndroidActionContextFactory(stateProvider,
                 callerProvider);
 
-        return new AndroidPolicy(aiPolicy, contextFactory, AndroidCapabilityRegistry.getInstance());
+        return new AndroidPolicy(applicationContext, contextFactory,
+                AndroidCapabilityRegistry.getInstance(), null, false);
     }
 
     /**
-     * Creates an {@code AndroidPolicy} for calls received from an
-     * external Android Binder caller.
+     * Creates an Android policy for calls received from an external
+     * Android Binder caller.
      *
-     * <p>The resulting policy resolves the calling UID and associated
-     * package name and identifies the caller as
-     * {@link AndroidCallerType#EXTERNAL}.</p>
-     *
-     * @param context Android context used to resolve the calling package
-     * @param aiPolicy policy to evaluate
-     * @return an Android policy configured for external Binder calls
-     * @throws NullPointerException if {@code context} or {@code aiPolicy}
-     *                              is {@code null}
+     * @param context Android context
+     * @return policy configured for external calls
+     * @throws NullPointerException if {@code context} is {@code null}
      */
-    public static AndroidPolicy forExternalCalls(Context context, AiPolicy aiPolicy) {
+    public static AndroidPolicy forExternalCalls(Context context) {
         Objects.requireNonNull(context, "context must not be null");
-        Objects.requireNonNull(aiPolicy, "policy must not be null");
 
         Context applicationContext = context.getApplicationContext();
 
@@ -112,34 +101,72 @@ public final class AndroidPolicy {
         AndroidActionContextFactory contextFactory = new AndroidActionContextFactory(stateProvider,
                 callerProvider);
 
-        return new AndroidPolicy(aiPolicy, contextFactory, AndroidCapabilityRegistry.getInstance());
+        return new AndroidPolicy(applicationContext, contextFactory,
+                AndroidCapabilityRegistry.getInstance(), callingUidProvider, true);
     }
 
     /**
-     * Evaluates a capability using the configured Android context.
+     * Evaluates a registered capability.
      *
-     * <p>The capability name is evaluated against the configured
-     * {@link AiPolicy}. The returned result describes whether the
-     * requested action is allowed.</p>
+     * <p>The capability is resolved from the generated capability registry
+     * and its metadata is evaluated against the current Android context.</p>
      *
-     * <p>This method only evaluates the policy. It does not invoke
-     * the underlying application method associated with the capability.</p>
+     * <p>This method only evaluates the capability. It does not invoke the
+     * underlying application method.</p>
      *
-     * @param capability capability name to evaluate
+     * @param capabilityName capability name
      * @param userInitiated whether the action was explicitly initiated
      *                      by the user
      * @return the result of the policy evaluation
-     * @throws NullPointerException if {@code capability} is {@code null}
+     * @throws NullPointerException if {@code capabilityName} is {@code null}
      */
-    public PolicyResult evaluate(String capability, boolean userInitiated) {
-        Objects.requireNonNull(capability, "capability must not be null");
+    public PolicyResult evaluate(String capabilityName, boolean userInitiated) {
+        Objects.requireNonNull(capabilityName, "capabilityName must not be null");
 
-        if (!capabilityRegistry.hasCapability(capability)) {
-            return new PolicyResult(Decision.DENY, "Unknown capability: " + capability);
+        Capability capability = capabilityRegistry.getCapability(capabilityName);
+
+        if (capability == null) {
+            return new PolicyResult(Decision.DENY, "Unknown capability: " + capabilityName);
         }
 
-        ActionContext context = contextFactory.create(capability, userInitiated);
+        ActionContext context = contextFactory.create(capabilityName, userInitiated);
 
-        return aiPolicy.evaluate(context);
+        return evaluateCapability(capability, context);
+    }
+
+    private PolicyResult evaluateCapability(Capability capability, ActionContext context) {
+        if (capability.isUserInitiatedRequired() && !context.isUserInitiated()) {
+            return new PolicyResult(Decision.DENY, "Capability requires user initiation");
+        }
+
+        CallerType callerType = context.getCallerIdentity().getType();
+
+        if (!capability.getAllowedCallerTypes().isEmpty()
+                && !capability.getAllowedCallerTypes().contains(callerType)) {
+
+            return new PolicyResult(Decision.DENY, "Caller type is not allowed");
+        }
+
+        for (String permission : capability.getRequiredPermissions()) {
+            if (!hasPermission(permission)) {
+                return new PolicyResult(Decision.DENY, "Required permission is missing: "
+                        + permission);
+            }
+        }
+
+        return new PolicyResult(Decision.ALLOW, null);
+    }
+
+    private boolean hasPermission(String permission) {
+        if (!isExternalCall) {
+            return context.checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED;
+
+        }
+
+        int callingUid = callingUidProvider.getCallingUid();
+
+        return context.checkPermission(permission, callingUid, Binder.getCallingPid())
+                == PackageManager.PERMISSION_GRANTED;
+
     }
 }
