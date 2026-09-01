@@ -1,4 +1,4 @@
-package io.github.jcodeforge.aipolicy.android.capability;
+package io.github.jcodeforge.aipolicy.android;
 
 import android.content.Context;
 import androidx.annotation.NonNull;

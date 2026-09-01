@@ -1,4 +1,4 @@
-package io.github.jcodeforge.aipolicy.android.capability;
+package io.github.jcodeforge.aipolicy.android;
 
 import android.content.Context;
 import java.util.Collection;
@@ -11,7 +11,7 @@ import io.github.jcodeforge.aipolicy.capability.CapabilityIndexProvider;
 import io.github.jcodeforge.aipolicy.capability.CapabilityProvider;
 import io.github.jcodeforge.aipolicy.capability.CapabilityRegistry;
 
-public final class AndroidCapabilityRegistry implements CapabilityProvider {
+final class AndroidCapabilityRegistry implements CapabilityProvider {
 
     private static final AndroidCapabilityRegistry INSTANCE = new AndroidCapabilityRegistry();
 

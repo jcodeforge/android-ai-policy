@@ -1,6 +1,9 @@
 package io.github.jcodeforge.aipolicy.android;
 
 import android.content.Context;
+
+import io.github.jcodeforge.aipolicy.capability.Capability;
+import java.util.Collection;
 import io.github.jcodeforge.aipolicy.ActionContext;
 import io.github.jcodeforge.aipolicy.AiPolicy;
 import io.github.jcodeforge.aipolicy.PolicyResult;
@@ -120,5 +123,38 @@ public final class AndroidPolicy {
         ActionContext context = contextFactory.create(capability, userInitiated);
 
         return aiPolicy.evaluate(context);
+    }
+
+    /**
+     * Returns all capabilities discovered in the application.
+     *
+     * <p>Capabilities are discovered and registered automatically when the
+     * application starts. The returned collection represents the capabilities
+     * currently available to the application.</p>
+     *
+     * @return all discovered capabilities; never {@code null}
+     */
+    public Collection<Capability> getCapabilities() {
+        return AndroidCapabilityRegistry.getInstance().getCapabilities();
+    }
+
+    /**
+     * Returns a capability by name.
+     *
+     * @param name the capability name
+     * @return the capability, or {@code null} if no such capability exists
+     */
+    public Capability getCapability(String name) {
+        return AndroidCapabilityRegistry.getInstance().getCapability(name);
+    }
+
+    /**
+     * Determines whether a capability is registered.
+     *
+     * @param name the capability name
+     * @return {@code true} if the capability exists
+     */
+    public boolean hasCapability(String name) {
+        return AndroidCapabilityRegistry.getInstance().hasCapability(name);
     }
 }

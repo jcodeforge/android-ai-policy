@@ -11,7 +11,7 @@
             tools:node="merge">
 
             <meta-data
-                android:name="io.github.jcodeforge.aipolicy.android.capability.AndroidCapabilityRegistryInitializer"
+                android:name="io.github.jcodeforge.aipolicy.android.AndroidCapabilityRegistryInitializer"
                 android:value="androidx.startup" />
 
         </provider>

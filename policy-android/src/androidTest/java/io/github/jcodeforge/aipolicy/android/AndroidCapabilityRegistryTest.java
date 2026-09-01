@@ -1,11 +1,11 @@
-package io.github.jcodeforge.aipolicy.android.capability;
+package io.github.jcodeforge.aipolicy.android;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+
 import io.github.jcodeforge.aipolicy.capability.AiCapability;
 import io.github.jcodeforge.aipolicy.capability.Capability;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
