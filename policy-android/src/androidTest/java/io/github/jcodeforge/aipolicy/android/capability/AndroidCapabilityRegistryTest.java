@@ -1,11 +1,13 @@
 package io.github.jcodeforge.aipolicy.android.capability;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
-
 import io.github.jcodeforge.aipolicy.capability.AiCapability;
 import io.github.jcodeforge.aipolicy.capability.Capability;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -36,17 +38,35 @@ public class AndroidCapabilityRegistryTest {
     public void registersCapabilitiesAutomatically() {
         AndroidCapabilityRegistry registry = AndroidCapabilityRegistry.getInstance();
 
-        Capability capability = registry.get("customer.read");
+        Capability capability = registry.getCapability("customer.read");
 
         assertNotNull(capability);
-        assertTrue(registry.contains("customer.read"));
+        assertTrue(registry.hasCapability("customer.read"));
     }
 
     @Test
     public void registersCapabilitiesFromMultipleClasses() {
         AndroidCapabilityRegistry registry = AndroidCapabilityRegistry.getInstance();
 
-        assertTrue(registry.contains("customer.read"));
-        assertTrue(registry.contains("customer.delete"));
+        assertTrue(registry.hasCapability("customer.read"));
+        assertTrue(registry.hasCapability("customer.delete"));
+    }
+
+    @Test
+    public void queriesRegisteredCapability() {
+        AndroidCapabilityRegistry registry = AndroidCapabilityRegistry.getInstance();
+
+        Capability capability = registry.getCapability("customer.read");
+
+        assertNotNull(capability);
+        assertEquals("customer.read", capability.getName());
+    }
+
+    @Test
+    public void returnsRegisteredCapabilities() {
+        AndroidCapabilityRegistry registry = AndroidCapabilityRegistry.getInstance();
+
+        assertNotNull(registry.getCapabilities());
+        assertFalse(registry.getCapabilities().isEmpty());
     }
 }
