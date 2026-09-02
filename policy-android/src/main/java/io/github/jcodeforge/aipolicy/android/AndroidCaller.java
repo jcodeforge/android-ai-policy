@@ -3,7 +3,11 @@ package io.github.jcodeforge.aipolicy.android;
 import java.util.Objects;
 
 /**
- * Identifies the Android process that initiated an action.
+ * Represents the Android caller associated with an action.
+ *
+ * <p>The caller contains Android-specific identity information.
+ * It is converted to the platform-independent {@code CallerIdentity}
+ * by the Android policy layer.</p>
  */
 public final class AndroidCaller {
 
