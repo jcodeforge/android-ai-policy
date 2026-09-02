@@ -467,12 +467,7 @@ public class AiCapabilityProcessorTest {
         String serviceContent =
                 Files.readString(serviceFile);
 
-        assertTrue(
-                serviceContent.contains(
-                        GENERATED_PACKAGE
-                                + ".GeneratedCapabilityIndexProvider"
-                )
-        );
+        assertTrue(serviceContent.contains(GENERATED_PACKAGE + ".GeneratedCapabilityIndexProvider"));
     }
 
     @Test
@@ -534,8 +529,8 @@ public class AiCapabilityProcessorTest {
                 .toString();
 
         assertTrue(generatedSource.contains("new AppFunctionCapability("));
-        assertTrue(generatedSource.contains("CustomerAppFunctionService#readCustomer"));
-        assertFalse(generatedSource.contains("CustomerService#readCustomer"));
+        assertTrue(generatedSource.contains("example.CustomerAppFunctionService#readCustomer"));
+        assertFalse(generatedSource.contains("example.CustomerService#readCustomer"));
         assertTrue(generatedSource.contains("\"customer.read\""));
         assertTrue(generatedSource.contains("\"Read customer information\""));
         assertTrue(generatedSource.contains("implements AppFunctionCapabilityIndex"));

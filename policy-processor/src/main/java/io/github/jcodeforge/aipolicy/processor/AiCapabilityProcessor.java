@@ -41,6 +41,9 @@ public final class AiCapabilityProcessor extends AbstractProcessor {
     private static final String APP_FUNCTION_SERVICE_ENTRY_POINT_ANNOTATION =
             "androidx.appfunctions.AppFunctionServiceEntryPoint";
 
+    private static final String KSP_GENERATED_PROVIDER =
+            "io.github.jcodeforge.aipolicy.generated.GeneratedKspCapabilityIndexProvider";
+
     private static final String SERVICE_NAME_ARGUMENT = "serviceName";
 
     private final List<Capability> capabilities = new ArrayList<>();
@@ -199,16 +202,18 @@ public final class AiCapabilityProcessor extends AbstractProcessor {
         try {
             FileObject file = processingEnv.getFiler().createResource(StandardLocation.CLASS_OUTPUT,
                     "", "META-INF/services/"
-                            + "io.github.jcodeforge.aipolicy.capability.CapabilityIndexProvider");
+                            + "io.github.jcodeforge.aipolicy.capability." + "CapabilityIndexProvider");
 
             try (Writer writer = file.openWriter()) {
                 writer.write(GENERATED_PACKAGE + ".GeneratedCapabilityIndexProvider\n");
+                writer.write(KSP_GENERATED_PROVIDER + "\n");
             }
 
         } catch (IOException exception) {
             processingEnv.getMessager().printMessage(javax.tools.Diagnostic.Kind.ERROR,
                     "Failed to generate CapabilityIndexProvider service file: "
-                            + exception.getMessage());
+                    + exception.getMessage()
+            );
         }
     }
 

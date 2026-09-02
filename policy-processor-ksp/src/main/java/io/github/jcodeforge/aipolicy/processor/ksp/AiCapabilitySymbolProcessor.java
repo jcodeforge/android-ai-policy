@@ -18,6 +18,8 @@ import java.util.List;
 import io.github.jcodeforge.aipolicy.CallerType;
 import io.github.jcodeforge.aipolicy.capability.Capability;
 import com.google.devtools.ksp.symbol.KSType;
+import com.google.devtools.ksp.symbol.Origin;
+
 import io.github.jcodeforge.aipolicy.capability.AppFunctionCapability;
 
 public final class AiCapabilitySymbolProcessor implements SymbolProcessor {
@@ -35,16 +37,10 @@ public final class AiCapabilitySymbolProcessor implements SymbolProcessor {
             "androidx.appfunctions.AppFunction";
 
     private static final String GENERATED_PROVIDER_CLASS =
-            "GeneratedCapabilityIndexProvider";
+            "GeneratedKspCapabilityIndexProvider";
 
     private static final String CAPABILITY_INDEX_PROVIDER =
             "io.github.jcodeforge.aipolicy.capability.CapabilityIndexProvider";
-
-    private static final String SERVICE_FILE =
-            "META-INF/services/io.github.jcodeforge.aipolicy.capability.CapabilityIndexProvider";
-
-    private static final String GENERATED_PROVIDER =
-            GENERATED_PACKAGE + "." + GENERATED_PROVIDER_CLASS;
 
     private static final String APP_FUNCTION_SERVICE_ENTRY_POINT_ANNOTATION =
             "androidx.appfunctions.AppFunctionServiceEntryPoint";
@@ -86,6 +82,10 @@ public final class AiCapabilitySymbolProcessor implements SymbolProcessor {
 
             KSFunctionDeclaration function = (KSFunctionDeclaration) symbol;
             KSAnnotation annotation = findAiCapabilityAnnotation(function);
+
+            if (function.getOrigin() != Origin.KOTLIN) {
+                continue;
+            }
 
             if (annotation == null) {
                 continue;
@@ -153,7 +153,6 @@ public final class AiCapabilitySymbolProcessor implements SymbolProcessor {
             generateFile(GENERATED_PROVIDER_CLASS, generateCapabilityIndexProvider());
             generateFile("GeneratedAppFunctionCapabilityIndex",
                     generateAppFunctionCapabilityIndex());
-            generateServiceFile();
 
         } catch (Exception e) {
             throw new IllegalStateException("Failed to generate " + GENERATED_CLASS, e);
@@ -188,14 +187,6 @@ public final class AiCapabilitySymbolProcessor implements SymbolProcessor {
             output.write(source.getBytes(StandardCharsets.UTF_8));
         } finally {
             output.close();
-        }
-    }
-
-    private void generateServiceFile() throws Exception {
-        try (OutputStream output = codeGenerator.createNewFileByPath(new Dependencies(false),
-                SERVICE_FILE,
-                "")) {
-            output.write((GENERATED_PROVIDER + "\n").getBytes(StandardCharsets.UTF_8));
         }
     }
 
