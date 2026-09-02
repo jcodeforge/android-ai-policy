@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.android.library)
+    alias(libs.plugins.ksp)
 }
 
 android {
@@ -22,6 +23,14 @@ android {
 dependencies {
     implementation(project(":policy-core"))
     androidTestAnnotationProcessor(project(":policy-processor"))
+
+    implementation("androidx.appfunctions:appfunctions:1.0.0-alpha10")
+    ksp("androidx.appfunctions:appfunctions-compiler:1.0.0-alpha10")
+
+    add(
+        "kspAndroidTestDebug",
+        "androidx.appfunctions:appfunctions-compiler:1.0.0-alpha10"
+    )
 
     implementation(libs.androidx.core)
     implementation(libs.androidx.lifecycle.process)
