@@ -2,6 +2,7 @@ package io.github.jcodeforge.aipolicy.capability;
 
 import org.junit.Test;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
@@ -13,10 +14,12 @@ public class CapabilityIndexTest {
     private static final class TestCapabilityIndex implements CapabilityIndex {
 
         private final Capability customer =
-                new Capability("customer.read", "Read customer information");
+                new Capability("customer.read", "Read customer information",
+                        false, Collections.emptyList(), Collections.emptyList());
 
         private final Capability invoice =
-                new Capability("invoice.read", "Read invoice information");
+                new Capability("invoice.read", "Read invoice information",
+                        false, Collections.emptyList(), Collections.emptyList());
 
         @Override
         public List<Capability> getCapabilities() {

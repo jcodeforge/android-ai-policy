@@ -12,8 +12,8 @@ public class CapabilityTest {
 
     @Test
     public void createsCapability() {
-        Capability capability = new Capability("customer.read",
-                "Read customer information");
+        Capability capability = new Capability("customer.read", "Read customer information",
+                false, Collections.emptyList(), Collections.emptyList());
 
         assertEquals("customer.read", capability.getName());
         assertEquals("Read customer information", capability.getDescription());
@@ -43,22 +43,26 @@ public class CapabilityTest {
 
     @Test(expected = NullPointerException.class)
     public void requiresName() {
-        new Capability(null, "Read customer information");
+        new Capability(null, "Read customer information", false,
+                Collections.emptyList(), Collections.emptyList());
     }
 
     @Test(expected = NullPointerException.class)
     public void requiresDescription() {
-        new Capability("customer.read", null);
+        new Capability("customer.read", null, false,
+                Collections.emptyList(), Collections.emptyList());
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void rejectsBlankName() {
-        new Capability("   ", "Read customer information");
+        new Capability("   ", "Read customer information", false,
+                Collections.emptyList(), Collections.emptyList());
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void rejectsBlankDescription() {
-        new Capability("customer.read", "   ");
+        new Capability("customer.read", "   ", false,
+                Collections.emptyList(), Collections.emptyList());
     }
 
     @Test(expected = NullPointerException.class)
@@ -85,12 +89,11 @@ public class CapabilityTest {
 
     @Test
     public void equalCapabilitiesAreEqual() {
-        Capability first = new Capability("customer.read", "Read customer information");
+        Capability first = new Capability("customer.read", "Read customer information",
+                false, Collections.emptyList(), Collections.emptyList());
 
-        Capability second = new Capability(
-                "customer.read",
-                "Read customer information"
-        );
+        Capability second = new Capability("customer.read", "Read customer information",
+                false, Collections.emptyList(), Collections.emptyList());
 
         assertEquals(first, second);
         assertEquals(first.hashCode(), second.hashCode());
@@ -100,13 +103,13 @@ public class CapabilityTest {
     public void differentCapabilitiesAreNotEqual() {
         Capability first = new Capability(
                 "customer.read",
-                "Read customer information"
-        );
+                "Read customer information", false, Collections.emptyList(),
+                Collections.emptyList());
 
         Capability second = new Capability(
                 "customer.delete",
-                "Delete customer"
-        );
+                "Delete customer", true, Collections.emptyList(),
+                Collections.emptyList());
 
         assertNotEquals(first, second);
     }

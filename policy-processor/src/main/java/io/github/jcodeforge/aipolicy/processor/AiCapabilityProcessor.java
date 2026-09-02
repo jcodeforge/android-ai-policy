@@ -2,6 +2,7 @@ package io.github.jcodeforge.aipolicy.processor;
 
 import io.github.jcodeforge.aipolicy.CallerType;
 import io.github.jcodeforge.aipolicy.capability.AiCapability;
+import io.github.jcodeforge.aipolicy.capability.Capability;
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Filer;
 import javax.annotation.processing.ProcessingEnvironment;
@@ -29,7 +30,7 @@ public final class AiCapabilityProcessor extends AbstractProcessor {
 
     private static final String GENERATED_CLASS = "GeneratedCapabilityIndex";
 
-    private final List<CapabilityMetadata> capabilities = new ArrayList<>();
+    private final List<Capability> capabilities = new ArrayList<>();
 
     private boolean generated;
 
@@ -63,7 +64,7 @@ public final class AiCapabilityProcessor extends AbstractProcessor {
                 continue;
             }
 
-            capabilities.add(new CapabilityMetadata(annotation.name(), annotation.description(),
+            capabilities.add(new Capability(annotation.name(), annotation.description(),
                     annotation.userInitiatedRequired(),
                     annotation.allowedCallerTypes(), annotation.requiredPermissions()));
         }
@@ -96,16 +97,16 @@ public final class AiCapabilityProcessor extends AbstractProcessor {
                     writer.write("        return Arrays.asList(\n");
 
                     for (int i = 0; i < capabilities.size(); i++) {
-                        CapabilityMetadata capability = capabilities.get(i);
+                        Capability capability = capabilities.get(i);
 
                         writer.write("                new Capability(\n");
-                        writer.write("                        " + quote(capability.name) + ",\n");
-                        writer.write("                        " + quote(capability.description) + ",\n");
-                        writer.write("                        " + capability.userInitiatedRequired + ",\n");
+                        writer.write("                        " + quote(capability.getName()) + ",\n");
+                        writer.write("                        " + quote(capability.getDescription()) + ",\n");
+                        writer.write("                        " + capability.isUserInitiatedRequired() + ",\n");
                         writer.write("                        "
-                                + generateCallerTypes(capability.allowedCallerTypes) + ",\n");
+                                + generateCallerTypes(capability.getAllowedCallerTypes()) + ",\n");
                         writer.write("                        "
-                                + generateStringList(capability.requiredPermissions));
+                                + generateStringList(capability.getRequiredPermissions()));
 
                         writer.write("\n                )");
 
@@ -184,8 +185,8 @@ public final class AiCapabilityProcessor extends AbstractProcessor {
                 .replace("\t", "\\t");
     }
 
-    private String generateCallerTypes(CallerType[] callerTypes) {
-        if (callerTypes.length == 0) {
+    private String generateCallerTypes(List<CallerType> callerTypes) {
+        if (callerTypes.isEmpty()) {
             return "java.util.Collections.emptyList()";
         }
 
@@ -193,13 +194,13 @@ public final class AiCapabilityProcessor extends AbstractProcessor {
 
         builder.append("java.util.Arrays.asList(");
 
-        for (int i = 0; i < callerTypes.length; i++) {
+        for (int i = 0; i < callerTypes.size(); i++) {
 
             if (i > 0) {
                 builder.append(", ");
             }
 
-            builder.append("CallerType.").append(callerTypes[i].name());
+            builder.append("CallerType.").append(callerTypes.get(i).name());
         }
 
         builder.append(")");
@@ -207,8 +208,8 @@ public final class AiCapabilityProcessor extends AbstractProcessor {
         return builder.toString();
     }
 
-    private String generateStringList(String[] values) {
-        if (values.length == 0) {
+    private String generateStringList(List<String> values) {
+        if (values.isEmpty()) {
             return "java.util.Collections.emptyList()";
         }
 
@@ -216,39 +217,17 @@ public final class AiCapabilityProcessor extends AbstractProcessor {
 
         builder.append("java.util.Arrays.asList(");
 
-        for (int i = 0; i < values.length; i++) {
+        for (int i = 0; i < values.size(); i++) {
 
             if (i > 0) {
                 builder.append(", ");
             }
 
-            builder.append(quote(values[i]));
+            builder.append(quote(values.get(i)));
         }
 
         builder.append(")");
 
         return builder.toString();
-    }
-
-    private static final class CapabilityMetadata {
-
-        private final String name;
-
-        private final String description;
-
-        private final boolean userInitiatedRequired;
-
-        private final CallerType[] allowedCallerTypes;
-
-        private final String[] requiredPermissions;
-
-        private CapabilityMetadata(String name, String description, boolean userInitiatedRequired,
-                                   CallerType[] allowedCallerTypes, String[] requiredPermissions) {
-            this.name = name;
-            this.description = description;
-            this.userInitiatedRequired = userInitiatedRequired;
-            this.allowedCallerTypes = allowedCallerTypes;
-            this.requiredPermissions = requiredPermissions;
-        }
     }
 }

@@ -1,7 +1,6 @@
 package io.github.jcodeforge.aipolicy.capability;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import io.github.jcodeforge.aipolicy.CallerType;
@@ -9,9 +8,8 @@ import io.github.jcodeforge.aipolicy.CallerType;
 /**
  * Represents an AI-accessible capability.
  *
- * <p>A capability has a stable identifier and a human-readable
- * description. Capability instances are immutable and can be used
- * by registration, discovery, and policy evaluation APIs.</p>
+ * <p>A capability contains all metadata required to determine whether
+ * an invocation may be performed. Capability instances are immutable.</p>
  */
 public final class Capability {
 
@@ -54,7 +52,7 @@ public final class Capability {
     }
 
     /**
-     * Convenience constructor for generated code.
+     * Constructor intended for generated capability metadata.
      */
     public Capability(String name, String description, boolean userInitiatedRequired,
                       CallerType[] allowedCallerTypes, String[] requiredPermissions) {
@@ -62,11 +60,6 @@ public final class Capability {
                 allowedCallerTypes, "allowedCallerTypes must not be null")),
                 Arrays.asList(Objects.requireNonNull(requiredPermissions,
                         "requiredPermissions must not be null")));
-    }
-
-    public Capability(String name, String description) {
-        this(name, description, false, Collections.emptyList(),
-                Collections.emptyList());
     }
 
     /**

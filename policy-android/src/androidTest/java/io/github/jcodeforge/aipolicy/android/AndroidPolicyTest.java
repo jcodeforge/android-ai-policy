@@ -12,6 +12,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -25,7 +26,10 @@ public class AndroidPolicyTest {
 
         @AiCapability(
                 name = "test.customer.read",
-                description = "Read customer information"
+                description = "Read customer information",
+                allowedCallerTypes = {
+                        CallerType.EXTERNAL
+                }
         )
         public void readCustomer() {
         }
@@ -106,7 +110,8 @@ public class AndroidPolicyTest {
 
                 PolicyResult result = policy.evaluate("test.customer.read", true);
 
-                assertTrue(result.isAllowed());
+                assertTrue(result.isDenied());
+                assertEquals("Caller type is not allowed", result.getReason());
             }
         });
     }
@@ -123,7 +128,6 @@ public class AndroidPolicyTest {
                 assertTrue(result.isAllowed());
             }
         });
-
     }
 
     @Test
