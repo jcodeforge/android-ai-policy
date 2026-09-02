@@ -479,21 +479,34 @@ public class AiCapabilityProcessorTest {
     public void generatesAppFunctionCapabilityIndex() throws Exception {
         JavaFileObject appFunctionAnnotation = forSourceLines(
                 "androidx.appfunctions.AppFunction",
-
                 "package androidx.appfunctions;",
                 "",
                 "public @interface AppFunction {",
                 "}"
         );
 
+        JavaFileObject appFunctionServiceEntryPointAnnotation = forSourceLines(
+                "androidx.appfunctions.AppFunctionServiceEntryPoint",
+                "package androidx.appfunctions;",
+                "",
+                "public @interface AppFunctionServiceEntryPoint {",
+                "    String serviceName();",
+                "    String appFunctionXmlFileName();",
+                "}"
+        );
+
         JavaFileObject source = forSourceLines(
                 "example.CustomerService",
-
                 "package example;",
                 "",
                 "import androidx.appfunctions.AppFunction;",
+                "import androidx.appfunctions.AppFunctionServiceEntryPoint;",
                 "import io.github.jcodeforge.aipolicy.capability.AiCapability;",
                 "",
+                "@AppFunctionServiceEntryPoint(",
+                "        serviceName = \"CustomerAppFunctionService\",",
+                "        appFunctionXmlFileName = \"customer_app_function_service\"",
+                ")",
                 "public final class CustomerService {",
                 "",
                 "    @AppFunction",
@@ -510,16 +523,19 @@ public class AiCapabilityProcessorTest {
 
         Compilation compilation = javac()
                 .withProcessors(new AiCapabilityProcessor())
-                .compile(appFunctionAnnotation, source);
+                .compile(appFunctionAnnotation, appFunctionServiceEntryPointAnnotation, source);
 
         CompilationSubject.assertThat(compilation).succeeded();
 
         String generatedSource = compilation.generatedSourceFile(
                 GENERATED_PACKAGE + ".GeneratedAppFunctionCapabilityIndex")
-                .get().getCharContent(false).toString();
+                .get()
+                .getCharContent(false)
+                .toString();
 
         assertTrue(generatedSource.contains("new AppFunctionCapability("));
-        assertTrue(generatedSource.contains("example.CustomerService#readCustomer"));
+        assertTrue(generatedSource.contains("CustomerAppFunctionService#readCustomer"));
+        assertFalse(generatedSource.contains("CustomerService#readCustomer"));
         assertTrue(generatedSource.contains("\"customer.read\""));
         assertTrue(generatedSource.contains("\"Read customer information\""));
         assertTrue(generatedSource.contains("implements AppFunctionCapabilityIndex"));

@@ -20,6 +20,8 @@ import java.io.Writer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import javax.lang.model.element.AnnotationMirror;
+import javax.lang.model.element.AnnotationValue;
 
 @SupportedAnnotationTypes(
         "io.github.jcodeforge.aipolicy.capability.AiCapability"
@@ -35,6 +37,11 @@ public final class AiCapabilityProcessor extends AbstractProcessor {
             "GeneratedAppFunctionCapabilityIndex";
 
     private static final String APP_FUNCTION_ANNOTATION = "androidx.appfunctions.AppFunction";
+
+    private static final String APP_FUNCTION_SERVICE_ENTRY_POINT_ANNOTATION =
+            "androidx.appfunctions.AppFunctionServiceEntryPoint";
+
+    private static final String SERVICE_NAME_ARGUMENT = "serviceName";
 
     private final List<Capability> capabilities = new ArrayList<>();
 
@@ -156,14 +163,28 @@ public final class AiCapabilityProcessor extends AbstractProcessor {
 
             try (Writer writer = file.openWriter()) {
                 writer.write("package " + GENERATED_PACKAGE + ";\n\n");
-                writer.write("import io.github.jcodeforge.aipolicy.capability.CapabilityIndex;\n");
-                writer.write("import io.github.jcodeforge.aipolicy.capability.CapabilityIndexProvider;\n\n");
+
+                writer.write("import io.github.jcodeforge.aipolicy.capability."
+                        + "AppFunctionCapabilityIndex;\n");
+                writer.write("import io.github.jcodeforge.aipolicy.capability."
+                        + "CapabilityIndex;\n");
+                writer.write("import io.github.jcodeforge.aipolicy.capability."
+                        + "CapabilityIndexProvider;\n\n");
+
                 writer.write("public final class GeneratedCapabilityIndexProvider "
                         + "implements CapabilityIndexProvider {\n\n");
+
                 writer.write("    @Override\n");
                 writer.write("    public CapabilityIndex getCapabilityIndex() {\n");
                 writer.write("        return new GeneratedCapabilityIndex();\n");
+                writer.write("    }\n\n");
+
+                writer.write("    @Override\n");
+                writer.write("    public AppFunctionCapabilityIndex "
+                        + "getAppFunctionCapabilityIndex() {\n");
+                writer.write("        return new GeneratedAppFunctionCapabilityIndex();\n");
                 writer.write("    }\n");
+
                 writer.write("}\n");
             }
 
@@ -329,16 +350,56 @@ public final class AiCapabilityProcessor extends AbstractProcessor {
                                 .equals(APP_FUNCTION_ANNOTATION));
     }
 
+    private String findAppFunctionServiceName(TypeElement typeElement) {
+        for (AnnotationMirror annotation : processingEnv.getElementUtils()
+                .getAllAnnotationMirrors(typeElement)) {
+
+            String qualifiedName = annotation.getAnnotationType().toString();
+
+            if (!APP_FUNCTION_SERVICE_ENTRY_POINT_ANNOTATION.equals(qualifiedName)) {
+                continue;
+            }
+
+            for (var entry :
+                    processingEnv.getElementUtils().getElementValuesWithDefaults(annotation).entrySet()) {
+
+                if (SERVICE_NAME_ARGUMENT.equals(entry.getKey().getSimpleName().toString())) {
+                    AnnotationValue value = entry.getValue();
+
+                    if (value.getValue() instanceof String) {
+                        return (String) value.getValue();
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
     private String createAppFunctionId(Element element) {
         Element enclosingElement = element.getEnclosingElement();
 
-        if (!(enclosingElement instanceof TypeElement)) {
-            throw new IllegalArgumentException("@AppFunction must be declared inside a class: "
-                    + element);
+        while (enclosingElement != null) {
+            if (enclosingElement instanceof TypeElement) {
+                String serviceName = findAppFunctionServiceName((TypeElement) enclosingElement);
+
+                if (serviceName != null) {
+                    String packageName = ((TypeElement) enclosingElement).getQualifiedName()
+                            .toString();
+
+                    int lastDot = packageName.lastIndexOf('.');
+                    if (lastDot >= 0) {
+                        packageName = packageName.substring(0, lastDot);
+                    }
+
+                    return packageName + "." + serviceName + "#" + element.getSimpleName();
+                }
+            }
+
+            enclosingElement = enclosingElement.getEnclosingElement();
         }
 
-        TypeElement typeElement = (TypeElement) enclosingElement;
-
-        return typeElement.getQualifiedName() + "#" + element.getSimpleName();
+        throw new IllegalArgumentException("Could not find enclosing @AppFunctionServiceEntryPoint for: "
+                + element);
     }
 }

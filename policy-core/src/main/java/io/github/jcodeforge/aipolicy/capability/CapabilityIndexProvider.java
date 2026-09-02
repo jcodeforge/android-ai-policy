@@ -15,4 +15,11 @@ public interface CapabilityIndexProvider {
      * @return the capability index; never {@code null}
      */
     CapabilityIndex getCapabilityIndex();
+
+    /**
+     * Returns the generated AppFunction capability index.
+     *
+     * @return the AppFunction capability index; never {@code null}
+     */
+    AppFunctionCapabilityIndex getAppFunctionCapabilityIndex();
 }
