@@ -1,5 +1,6 @@
 package io.github.jcodeforge.aipolicy.android;
 
+import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import io.github.jcodeforge.aipolicy.CallerType;
@@ -13,6 +14,8 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+
+import android.content.Context;
 
 @RunWith(AndroidJUnit4.class)
 public class AndroidCapabilityRegistryTest {
@@ -42,7 +45,7 @@ public class AndroidCapabilityRegistryTest {
 
     @Test
     public void registersCapabilitiesAutomatically() {
-        AndroidCapabilityRegistry registry = AndroidCapabilityRegistry.getInstance();
+        AndroidCapabilityRegistry registry = getInitializedRegistry();
 
         Capability capability = registry.getCapability("customer.read");
 
@@ -52,7 +55,7 @@ public class AndroidCapabilityRegistryTest {
 
     @Test
     public void registersCapabilitiesFromMultipleClasses() {
-        AndroidCapabilityRegistry registry = AndroidCapabilityRegistry.getInstance();
+        AndroidCapabilityRegistry registry = getInitializedRegistry();
 
         assertTrue(registry.hasCapability("customer.read"));
         assertTrue(registry.hasCapability("customer.delete"));
@@ -60,7 +63,7 @@ public class AndroidCapabilityRegistryTest {
 
     @Test
     public void registersCapabilityMetadata() {
-        AndroidCapabilityRegistry registry = AndroidCapabilityRegistry.getInstance();
+        AndroidCapabilityRegistry registry = getInitializedRegistry();
 
         Capability capability = registry.getCapability("customer.delete");
 
@@ -74,7 +77,7 @@ public class AndroidCapabilityRegistryTest {
 
     @Test
     public void registersCapabilitiesWithoutMetadata() {
-        AndroidCapabilityRegistry registry = AndroidCapabilityRegistry.getInstance();
+        AndroidCapabilityRegistry registry = getInitializedRegistry();
 
         Capability capability = registry.getCapability("customer.read");
 
@@ -88,7 +91,7 @@ public class AndroidCapabilityRegistryTest {
 
     @Test
     public void returnsRegisteredCapabilities() {
-        AndroidCapabilityRegistry registry = AndroidCapabilityRegistry.getInstance();
+        AndroidCapabilityRegistry registry = getInitializedRegistry();
 
         assertNotNull(registry.getCapabilities());
         assertFalse(registry.getCapabilities().isEmpty());
@@ -96,9 +99,19 @@ public class AndroidCapabilityRegistryTest {
 
     @Test
     public void returnsNullForUnknownCapability() {
-        AndroidCapabilityRegistry registry = AndroidCapabilityRegistry.getInstance();
+        AndroidCapabilityRegistry registry = getInitializedRegistry();
 
         assertNull(registry.getCapability("does.not.exist"));
         assertFalse(registry.hasCapability("does.not.exist"));
+    }
+
+    private AndroidCapabilityRegistry getInitializedRegistry() {
+        Context context = ApplicationProvider.getApplicationContext();
+
+        AndroidCapabilityRegistry registry = AndroidCapabilityRegistry.getInstance();
+
+        registry.initialize(context);
+
+        return registry;
     }
 }
