@@ -3,8 +3,6 @@ package io.github.jcodeforge.aipolicy;
 import java.util.Objects;
 
 /**
- * Represents the result of evaluating an action against an {@link AiPolicy}.
- *
  * <p>A policy result contains the outcome of the evaluation and, for
  * non-allowed decisions, a reason describing why the action was not
  * immediately allowed.</p>
