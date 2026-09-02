@@ -21,3 +21,4 @@ rootProject.name = "Android AI Policy"
 include(":policy-core")
 include(":policy-android")
 include(":policy-processor")
+include(":policy-processor-ksp")

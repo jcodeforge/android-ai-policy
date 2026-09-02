@@ -27,6 +27,8 @@ dependencies {
     implementation("androidx.appfunctions:appfunctions:1.0.0-alpha10")
     ksp("androidx.appfunctions:appfunctions-compiler:1.0.0-alpha10")
 
+    kspAndroidTest(project(":policy-processor-ksp"))
+
     add(
         "kspAndroidTestDebug",
         "androidx.appfunctions:appfunctions-compiler:1.0.0-alpha10"

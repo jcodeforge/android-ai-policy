@@ -2,6 +2,7 @@ package io.github.jcodeforge.aipolicy.processor;
 
 import io.github.jcodeforge.aipolicy.CallerType;
 import io.github.jcodeforge.aipolicy.capability.AiCapability;
+import io.github.jcodeforge.aipolicy.capability.AppFunctionCapability;
 import io.github.jcodeforge.aipolicy.capability.Capability;
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Filer;
@@ -30,7 +31,14 @@ public final class AiCapabilityProcessor extends AbstractProcessor {
 
     private static final String GENERATED_CLASS = "GeneratedCapabilityIndex";
 
+    private static final String GENERATED_APP_FUNCTION_CLASS =
+            "GeneratedAppFunctionCapabilityIndex";
+
+    private static final String APP_FUNCTION_ANNOTATION = "androidx.appfunctions.AppFunction";
+
     private final List<Capability> capabilities = new ArrayList<>();
+
+    private final List<AppFunctionCapability> appFunctionCapabilities = new ArrayList<>();
 
     private boolean generated;
 
@@ -51,6 +59,7 @@ public final class AiCapabilityProcessor extends AbstractProcessor {
                 generateCapabilityIndex();
                 generateCapabilityIndexProvider();
                 generateCapabilityIndexProviderServiceFile();
+                generateAppFunctionCapabilityIndex();
                 generated = true;
             }
 
@@ -64,9 +73,19 @@ public final class AiCapabilityProcessor extends AbstractProcessor {
                 continue;
             }
 
-            capabilities.add(new Capability(annotation.name(), annotation.description(),
+            Capability capability = new Capability(
+                    annotation.name(),
+                    annotation.description(),
                     annotation.userInitiatedRequired(),
-                    annotation.allowedCallerTypes(), annotation.requiredPermissions()));
+                    annotation.allowedCallerTypes(),
+                    annotation.requiredPermissions());
+
+            capabilities.add(capability);
+
+            if (hasAppFunctionAnnotation(element)) {
+                appFunctionCapabilities.add(new AppFunctionCapability(createAppFunctionId(element),
+                        capability));
+            }
         }
 
         return false;
@@ -172,6 +191,76 @@ public final class AiCapabilityProcessor extends AbstractProcessor {
         }
     }
 
+    private void generateAppFunctionCapabilityIndex() {
+        try {
+            Filer filer = processingEnv.getFiler();
+
+            JavaFileObject file = filer.createSourceFile(GENERATED_PACKAGE + "."
+                    + GENERATED_APP_FUNCTION_CLASS);
+
+            try (Writer writer = file.openWriter()) {
+                writer.write("package " + GENERATED_PACKAGE + ";\n\n");
+                writer.write("import io.github.jcodeforge.aipolicy.capability."
+                        + "AppFunctionCapability;\n");
+                writer.write("import io.github.jcodeforge.aipolicy.capability."
+                        + "AppFunctionCapabilityIndex;\n");
+                writer.write(
+                        "import io.github.jcodeforge.aipolicy.capability." + "Capability;\n");
+                writer.write("import java.util.Arrays;\n");
+                writer.write("import java.util.List;\n\n");
+                writer.write(
+                        "public final class " + GENERATED_APP_FUNCTION_CLASS
+                                + " implements AppFunctionCapabilityIndex {\n\n");
+                writer.write("    @Override\n");
+                writer.write("    public List<AppFunctionCapability> "
+                                + "getAppFunctionCapabilities() {\n");
+
+                if (appFunctionCapabilities.isEmpty()) {
+                    writer.write("        return java.util.Collections.emptyList();\n");
+                } else {
+                    writer.write("        return Arrays.asList(\n");
+
+                    for (int i = 0; i < appFunctionCapabilities.size(); i++) {
+                        AppFunctionCapability appFunctionCapability = appFunctionCapabilities.get(i);
+                        Capability capability = appFunctionCapability.getCapability();
+                        writer.write("                new AppFunctionCapability(\n");
+                        writer.write("                        " + quote(
+                                appFunctionCapability.getFunctionId()) + ",\n");
+                        writer.write("                        new Capability(\n");
+                        writer.write("                                "
+                                + quote(capability.getName()) + ",\n");
+                        writer.write("                                "
+                                + quote(capability.getDescription()) + ",\n");
+                        writer.write("                                "
+                                + capability.isUserInitiatedRequired() + ",\n");
+                        writer.write("                                "
+                                + generateCallerTypes(capability.getAllowedCallerTypes()) + ",\n");
+                        writer.write("                                " + generateStringList(
+                                capability.getRequiredPermissions()) + "\n");
+                        writer.write("                        )\n");
+                        writer.write("                )");
+
+                        if (i < appFunctionCapabilities.size() - 1) {
+                            writer.write(",");
+                        }
+
+                        writer.write("\n");
+                    }
+
+                    writer.write("        );\n");
+                }
+
+                writer.write("    }\n");
+                writer.write("}\n");
+            }
+
+        } catch (IOException exception) {
+            processingEnv.getMessager().printMessage(javax.tools.Diagnostic.Kind.ERROR,
+                    "Failed to generate " + GENERATED_APP_FUNCTION_CLASS + ": "
+                            + exception.getMessage());
+        }
+    }
+
     private String quote(String value) {
         return "\"" + escape(value) + "\"";
     }
@@ -229,5 +318,27 @@ public final class AiCapabilityProcessor extends AbstractProcessor {
         builder.append(")");
 
         return builder.toString();
+    }
+
+    private boolean hasAppFunctionAnnotation(Element element) {
+        return element.getAnnotationMirrors()
+                .stream()
+                .anyMatch(annotation ->
+                        annotation.getAnnotationType()
+                                .toString()
+                                .equals(APP_FUNCTION_ANNOTATION));
+    }
+
+    private String createAppFunctionId(Element element) {
+        Element enclosingElement = element.getEnclosingElement();
+
+        if (!(enclosingElement instanceof TypeElement)) {
+            throw new IllegalArgumentException("@AppFunction must be declared inside a class: "
+                    + element);
+        }
+
+        TypeElement typeElement = (TypeElement) enclosingElement;
+
+        return typeElement.getQualifiedName() + "#" + element.getSimpleName();
     }
 }
