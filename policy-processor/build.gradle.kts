@@ -1,10 +1,12 @@
 plugins {
     `java-library`
     alias(libs.plugins.maven.publish)
+    signing
 }
 
 mavenPublishing {
     publishToMavenCentral()
+    signAllPublications()
 }
 
 java {

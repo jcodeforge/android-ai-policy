@@ -11,3 +11,11 @@ allprojects {
         mavenCentral()
     }
 }
+
+subprojects {
+    pluginManager.withPlugin("signing") {
+        extensions.configure<SigningExtension> {
+            useGpgCmd()
+        }
+    }
+}
