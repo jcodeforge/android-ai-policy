@@ -9,7 +9,7 @@ java {
 
 dependencies {
     implementation(project(":policy-core"))
-    implementation("com.google.devtools.ksp:symbol-processing-api:2.3.11")
+    implementation(libs.symbol.processing.api)
 
     testImplementation(libs.junit)
 }
