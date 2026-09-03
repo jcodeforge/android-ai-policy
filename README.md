@@ -2,8 +2,6 @@
 
 A lightweight policy engine for controlling AI-initiated actions in Android applications.
 
-> **Status:** Early development — API and architecture are subject to change.
-
 ---
 
 ## Built on Android AppFunctions
