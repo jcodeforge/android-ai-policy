@@ -61,4 +61,26 @@ If no rule matches, the result is DENY.
 
 ## License
 
-Apache License 2.0
+This project is licensed under the Apache License 2.0. See the `LICENSE` file for details.
+
+---
+
+## Support
+
+If this library is useful to you, consider supporting its development.
+
+Development requires time for implementing new features, improving documentation, 
+maintaining standards compatibility, and providing support.
+
+
+<a href="https://paypal.me/juniorscholle">
+  <img src="https://img.shields.io/badge/Donate-PayPal-00457C?logo=paypal&logoColor=white" alt="Donate with PayPal">
+</a>
+
+**PayPal:** https://paypal.me/juniorscholle  
+
+---
+
+## Articles
+
+- Coming soon
