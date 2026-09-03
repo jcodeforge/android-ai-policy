@@ -6,7 +6,6 @@ import com.google.devtools.ksp.processing.Resolver;
 import com.google.devtools.ksp.processing.SymbolProcessor;
 import com.google.devtools.ksp.symbol.KSAnnotated;
 import com.google.devtools.ksp.symbol.KSAnnotation;
-import com.google.devtools.ksp.symbol.KSDeclaration;
 import com.google.devtools.ksp.symbol.KSFunctionDeclaration;
 import com.google.devtools.ksp.symbol.KSValueArgument;
 import org.jetbrains.annotations.NotNull;
@@ -20,8 +19,6 @@ import io.github.jcodeforge.aipolicy.capability.Capability;
 import com.google.devtools.ksp.symbol.KSType;
 import com.google.devtools.ksp.symbol.Origin;
 
-import io.github.jcodeforge.aipolicy.capability.AppFunctionCapability;
-
 public final class AiCapabilitySymbolProcessor implements SymbolProcessor {
 
     private static final String AI_CAPABILITY_ANNOTATION =
@@ -33,22 +30,13 @@ public final class AiCapabilitySymbolProcessor implements SymbolProcessor {
     private static final String GENERATED_CLASS =
             "GeneratedCapabilityIndex";
 
-    private static final String APP_FUNCTION_ANNOTATION =
-            "androidx.appfunctions.AppFunction";
-
     private static final String GENERATED_PROVIDER_CLASS =
             "GeneratedKspCapabilityIndexProvider";
 
     private static final String CAPABILITY_INDEX_PROVIDER =
             "io.github.jcodeforge.aipolicy.capability.CapabilityIndexProvider";
 
-    private static final String APP_FUNCTION_SERVICE_ENTRY_POINT_ANNOTATION =
-            "androidx.appfunctions.AppFunctionServiceEntryPoint";
-
-    private static final String SERVICE_NAME_ARGUMENT = "serviceName";
-
     private final List<Capability> capabilities = new ArrayList<>();
-    private final List<AppFunctionCapability> appFunctionCapabilities = new ArrayList<>();
 
     private final CodeGenerator codeGenerator;
 
@@ -93,53 +81,9 @@ public final class AiCapabilitySymbolProcessor implements SymbolProcessor {
 
             Capability capability = extractCapability(annotation);
             capabilities.add(capability);
-
-            if (hasAppFunctionAnnotation(function)) {
-                appFunctionCapabilities.add(
-                        new AppFunctionCapability(createAppFunctionId(function), capability)
-                );
-            }
         }
 
         return deferred;
-    }
-
-    private String createAppFunctionId(KSFunctionDeclaration function) {
-        KSDeclaration parent = function.getParentDeclaration();
-
-        while (parent != null) {
-            Iterator<KSAnnotation> annotations = parent.getAnnotations().iterator();
-
-            while (annotations.hasNext()) {
-                KSAnnotation annotation = annotations.next();
-
-                String annotationName = annotation.getAnnotationType()
-                        .resolve()
-                        .getDeclaration()
-                        .getQualifiedName()
-                        .asString();
-
-                if (APP_FUNCTION_SERVICE_ENTRY_POINT_ANNOTATION.equals(annotationName)) {
-                    String serviceName = extractServiceName(annotation);
-
-                    if (serviceName == null || serviceName.trim().isEmpty()) {
-                        throw new IllegalArgumentException(
-                                "@AppFunctionServiceEntryPoint must define serviceName: "
-                                        + parent);
-                    }
-
-                    String packageName = parent.getPackageName().asString();
-
-                    return packageName + "." + serviceName
-                            + "#" + function.getSimpleName().asString();
-                }
-            }
-
-            parent = parent.getParentDeclaration();
-        }
-
-        throw new IllegalArgumentException("Could not find enclosing @AppFunctionServiceEntryPoint for: "
-                + function);
     }
 
     @Override
@@ -151,32 +95,10 @@ public final class AiCapabilitySymbolProcessor implements SymbolProcessor {
         try {
             generateFile(GENERATED_CLASS, generateCapabilityIndex());
             generateFile(GENERATED_PROVIDER_CLASS, generateCapabilityIndexProvider());
-            generateFile("GeneratedAppFunctionCapabilityIndex",
-                    generateAppFunctionCapabilityIndex());
 
         } catch (Exception e) {
             throw new IllegalStateException("Failed to generate " + GENERATED_CLASS, e);
         }
-    }
-
-    private boolean hasAppFunctionAnnotation(KSFunctionDeclaration function) {
-        Iterator<KSAnnotation> iterator = function.getAnnotations().iterator();
-
-        while (iterator.hasNext()) {
-            KSAnnotation annotation = iterator.next();
-
-            String annotationName = annotation.getAnnotationType()
-                    .resolve()
-                    .getDeclaration()
-                    .getQualifiedName()
-                    .asString();
-
-            if (APP_FUNCTION_ANNOTATION.equals(annotationName)) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     private void generateFile(String className, String source) throws Exception {
@@ -259,8 +181,7 @@ public final class AiCapabilitySymbolProcessor implements SymbolProcessor {
                 .append(CAPABILITY_INDEX_PROVIDER)
                 .append(";\n");
 
-        source.append("import io.github.jcodeforge.aipolicy.capability.CapabilityIndex;\n");
-        source.append("import io.github.jcodeforge.aipolicy.capability.AppFunctionCapabilityIndex;\n\n");
+        source.append("import io.github.jcodeforge.aipolicy.capability.CapabilityIndex;\n\n");
 
         source.append("public final class ")
                 .append(GENERATED_PROVIDER_CLASS)
@@ -268,16 +189,8 @@ public final class AiCapabilitySymbolProcessor implements SymbolProcessor {
 
         source.append("    @Override\n");
         source.append("    public CapabilityIndex getCapabilityIndex() {\n");
-        source.append("        return new ")
-                .append(GENERATED_CLASS)
-                .append("();\n");
-        source.append("    }\n\n");
-
-        source.append("    @Override\n");
-        source.append("    public AppFunctionCapabilityIndex getAppFunctionCapabilityIndex() {\n");
-        source.append("        return new GeneratedAppFunctionCapabilityIndex();\n");
+        source.append("        return new ").append(GENERATED_CLASS).append("();\n");
         source.append("    }\n");
-
         source.append("}\n");
 
         return source.toString();
@@ -405,63 +318,6 @@ public final class AiCapabilitySymbolProcessor implements SymbolProcessor {
         return source.toString();
     }
 
-    private String generateAppFunctionCapabilityIndex() {
-        StringBuilder source = new StringBuilder();
-
-        source.append("package ")
-                .append(GENERATED_PACKAGE)
-                .append(";\n\n");
-
-        source.append("import io.github.jcodeforge.aipolicy.capability.Capability;\n");
-        source.append("import io.github.jcodeforge.aipolicy.capability.AppFunctionCapability;\n");
-        source.append("import io.github.jcodeforge.aipolicy.capability.AppFunctionCapabilityIndex;\n");
-        source.append("import java.util.List;\n\n");
-        source.append("public final class GeneratedAppFunctionCapabilityIndex ")
-                .append("implements AppFunctionCapabilityIndex {\n\n");
-        source.append("    @Override\n");
-        source.append("    public List<AppFunctionCapability> getAppFunctionCapabilities() {\n");
-        source.append("        return List.of(\n");
-
-        for (int i = 0; i < appFunctionCapabilities.size(); i++) {
-            AppFunctionCapability appFunctionCapability = appFunctionCapabilities.get(i);
-
-            source.append("            new AppFunctionCapability(\n");
-            source.append("                ")
-                    .append(quote(appFunctionCapability.getFunctionId()))
-                    .append(",\n");
-
-            Capability capability = appFunctionCapability.getCapability();
-
-            source.append("                new Capability(")
-                    .append(quote(capability.getName()))
-                    .append(", ")
-                    .append(quote(capability.getDescription()))
-                    .append(", ")
-                    .append(capability.isUserInitiatedRequired())
-                    .append(", ")
-                    .append(generateCallerTypes(
-                            capability.getAllowedCallerTypes()))
-                    .append(", ")
-                    .append(generateStringList(
-                            capability.getRequiredPermissions()))
-                    .append(")\n");
-
-            source.append("            )");
-
-            if (i < appFunctionCapabilities.size() - 1) {
-                source.append(",");
-            }
-
-            source.append("\n");
-        }
-
-        source.append("        );\n");
-        source.append("    }\n");
-        source.append("}\n");
-
-        return source.toString();
-    }
-
     private String generateStringList(List<String> values) {
         StringBuilder source = new StringBuilder("List.of(");
 
@@ -489,30 +345,5 @@ public final class AiCapabilitySymbolProcessor implements SymbolProcessor {
                 .replace("\n", "\\n")
                 .replace("\r", "\\r")
                 .replace("\t", "\\t");
-    }
-
-    private String extractServiceName(KSAnnotation annotation) {
-        Iterator<KSValueArgument> arguments = annotation.getArguments().iterator();
-
-        while (arguments.hasNext()) {
-            KSValueArgument argument = arguments.next();
-
-            if (argument.getName() == null) {
-                continue;
-            }
-
-            if (!SERVICE_NAME_ARGUMENT.equals(
-                    argument.getName().asString())) {
-                continue;
-            }
-
-            Object value = argument.getValue();
-
-            if (value instanceof String) {
-                return (String) value;
-            }
-        }
-
-        return null;
     }
 }

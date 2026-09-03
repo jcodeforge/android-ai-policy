@@ -1,6 +1,5 @@
 package io.github.jcodeforge.aipolicy.processor;
 
-import com.google.testing.compile.Compilation;
 import com.google.testing.compile.CompilationSubject;
 import org.junit.Test;
 import javax.tools.JavaCompiler;
@@ -468,71 +467,5 @@ public class AiCapabilityProcessorTest {
                 Files.readString(serviceFile);
 
         assertTrue(serviceContent.contains(GENERATED_PACKAGE + ".GeneratedCapabilityIndexProvider"));
-    }
-
-    @Test
-    public void generatesAppFunctionCapabilityIndex() throws Exception {
-        JavaFileObject appFunctionAnnotation = forSourceLines(
-                "androidx.appfunctions.AppFunction",
-                "package androidx.appfunctions;",
-                "",
-                "public @interface AppFunction {",
-                "}"
-        );
-
-        JavaFileObject appFunctionServiceEntryPointAnnotation = forSourceLines(
-                "androidx.appfunctions.AppFunctionServiceEntryPoint",
-                "package androidx.appfunctions;",
-                "",
-                "public @interface AppFunctionServiceEntryPoint {",
-                "    String serviceName();",
-                "    String appFunctionXmlFileName();",
-                "}"
-        );
-
-        JavaFileObject source = forSourceLines(
-                "example.CustomerService",
-                "package example;",
-                "",
-                "import androidx.appfunctions.AppFunction;",
-                "import androidx.appfunctions.AppFunctionServiceEntryPoint;",
-                "import io.github.jcodeforge.aipolicy.capability.AiCapability;",
-                "",
-                "@AppFunctionServiceEntryPoint(",
-                "        serviceName = \"CustomerAppFunctionService\",",
-                "        appFunctionXmlFileName = \"customer_app_function_service\"",
-                ")",
-                "public final class CustomerService {",
-                "",
-                "    @AppFunction",
-                "    @AiCapability(",
-                "        name = \"customer.read\",",
-                "        description = \"Read customer information\"",
-                "    )",
-                "    public String readCustomer() {",
-                "        return \"Customer\";",
-                "    }",
-                "",
-                "}"
-        );
-
-        Compilation compilation = javac()
-                .withProcessors(new AiCapabilityProcessor())
-                .compile(appFunctionAnnotation, appFunctionServiceEntryPointAnnotation, source);
-
-        CompilationSubject.assertThat(compilation).succeeded();
-
-        String generatedSource = compilation.generatedSourceFile(
-                GENERATED_PACKAGE + ".GeneratedAppFunctionCapabilityIndex")
-                .get()
-                .getCharContent(false)
-                .toString();
-
-        assertTrue(generatedSource.contains("new AppFunctionCapability("));
-        assertTrue(generatedSource.contains("example.CustomerAppFunctionService#readCustomer"));
-        assertFalse(generatedSource.contains("example.CustomerService#readCustomer"));
-        assertTrue(generatedSource.contains("\"customer.read\""));
-        assertTrue(generatedSource.contains("\"Read customer information\""));
-        assertTrue(generatedSource.contains("implements AppFunctionCapabilityIndex"));
     }
 }

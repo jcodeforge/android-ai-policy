@@ -5,7 +5,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import io.github.jcodeforge.aipolicy.CallerType;
 import io.github.jcodeforge.aipolicy.capability.AiCapability;
-import io.github.jcodeforge.aipolicy.capability.AppFunctionCapability;
 import io.github.jcodeforge.aipolicy.capability.Capability;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -114,27 +113,5 @@ public class AndroidCapabilityRegistryTest {
         registry.initialize(context);
 
         return registry;
-    }
-
-    @Test
-    public void loadsGeneratedAppFunctionCapability() {
-        AndroidCapabilityRegistry registry = getInitializedRegistry();
-
-        String functionId =
-                "io.github.jcodeforge.aipolicy.android.appfunction.TestAppFunctionService"
-                        + "#getCustomerName";
-
-        assertTrue(registry.hasAppFunctionCapability(functionId));
-
-        AppFunctionCapability appFunctionCapability = registry.getAppFunctionCapability(functionId);
-
-        assertNotNull(appFunctionCapability);
-        assertEquals(functionId, appFunctionCapability.getFunctionId());
-
-        Capability capability = appFunctionCapability.getCapability();
-
-        assertNotNull(capability);
-        assertEquals("test.appfunction.customer.read", capability.getName());
-        assertEquals("Read customer information", capability.getDescription());
     }
 }
