@@ -17,4 +17,5 @@ local.properties
 .externalNativeBuild/
 .cxx/
 
+# Maven Central signing key
 private-key.asc
