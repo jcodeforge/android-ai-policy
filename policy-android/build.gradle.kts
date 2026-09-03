@@ -6,6 +6,12 @@ plugins {
 }
 
 mavenPublishing {
+    coordinates(
+        groupId = "io.github.jcodeforge",
+        artifactId = "policy-android",
+        version = "1.0.0"
+    )
+
     publishToMavenCentral()
     signAllPublications()
 }

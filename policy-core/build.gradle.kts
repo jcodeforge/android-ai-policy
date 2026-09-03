@@ -5,6 +5,12 @@ plugins {
 }
 
 mavenPublishing {
+    coordinates(
+        groupId = "io.github.jcodeforge",
+        artifactId = "policy-core",
+        version = "1.0.0"
+    )
+
     publishToMavenCentral()
     signAllPublications()
 }
