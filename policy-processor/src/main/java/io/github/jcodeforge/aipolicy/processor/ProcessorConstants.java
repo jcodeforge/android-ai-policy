@@ -2,6 +2,9 @@ package io.github.jcodeforge.aipolicy.processor;
 
 public final class ProcessorConstants {
 
+    private ProcessorConstants() {
+    }
+
     public static final String AI_CAPABILITY_ANNOTATION =
             "io.github.jcodeforge.aipolicy.capability.AiCapability";
 
@@ -9,7 +12,7 @@ public final class ProcessorConstants {
             "io.github.jcodeforge.aipolicy.generated";
 
     public static final String GENERATED_JAVA_CLASS =
-            "GeneratedCapabilityIndex";
+            "GeneratedJavaCapabilityIndex";
 
     public static final String GENERATED_KSP_CLASS =
             "GeneratedKspCapabilityIndex";
