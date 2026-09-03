@@ -21,7 +21,7 @@ android {
 }
 
 dependencies {
-    implementation(project(":policy-core"))
+    api(project(":policy-core"))
     androidTestAnnotationProcessor(project(":policy-processor"))
 
     implementation("androidx.appfunctions:appfunctions:1.0.0-alpha10")
