@@ -63,6 +63,29 @@ public final class CustomerService {
     }
 }
 ```
+---
+
+## Caller Types, Permissions & User Initiation
+
+Android AI Policy allows capabilities to define additional security requirements:
+
+- Caller types specify who is allowed to perform an action, such as the application itself (SELF) 
+or an external caller (EXTERNAL).
+- Permissions specify Android permissions that must be granted before an action is allowed.
+- User initiation can require an action to be explicitly initiated by the user before it can be performed.
+
+These requirements are defined with @AiCapability and checked automatically during policy evaluation.
+
+---
+
+## What the Library Does — and Does Not Do
+
+Android AI Policy provides a policy layer for AI-accessible Android capabilities. It evaluates 
+whether an action is allowed based on caller type, Android permissions, and user-initiation requirements.
+
+It does not execute the action, invoke application methods, authenticate users, or replace 
+Android's permission system. The application remains responsible for performing the actual business
+operation after a capability is allowed or not.
 
 ---
 
