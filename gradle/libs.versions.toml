@@ -7,6 +7,7 @@ lifecycle = "2.11.0"
 core = "1.7.0"
 mockito = "5.23.0"
 ksp = "2.3.11"
+mavenPublish = "0.35.0"
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -20,4 +21,5 @@ symbol-processing-api = { module = "com.google.devtools.ksp:symbol-processing-ap
 [plugins]
 android-library = { id = "com.android.library", version.ref = "agp" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+maven-publish = { id = "com.vanniktech.maven.publish", version.ref = "mavenPublish" }
 
