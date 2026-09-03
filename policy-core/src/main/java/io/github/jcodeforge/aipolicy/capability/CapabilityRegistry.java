@@ -30,7 +30,8 @@ public final class CapabilityRegistry {
         String name = capability.getName();
 
         if (capabilities.containsKey(name)) {
-            throw new IllegalArgumentException("Capability already registered: " + name);
+            throw new IllegalArgumentException("Capability names must be globally unique within an application."
+                    + "Capability already registered: " + name);
         }
 
         capabilities.put(name, capability);

@@ -48,15 +48,15 @@ final class AndroidCapabilityRegistry {
         initialized = true;
     }
 
-    public Collection<Capability> getCapabilities() {
+    Collection<Capability> getCapabilities() {
         return registry.getAll();
     }
 
-    public Capability getCapability(String name) {
+    Capability getCapability(String name) {
         return registry.get(name);
     }
 
-    public boolean hasCapability(String name) {
+    boolean hasCapability(String name) {
         return registry.contains(name);
     }
 }

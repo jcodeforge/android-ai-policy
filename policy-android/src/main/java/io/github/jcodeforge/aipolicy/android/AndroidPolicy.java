@@ -47,7 +47,7 @@ public final class AndroidPolicy {
         this.contextFactory = Objects.requireNonNull(contextFactory,
                 "contextFactory must not be null");
         this.capabilityRegistry = Objects.requireNonNull(capabilityRegistry,
-                "capabilityProvider must not be null");
+                "capabilityRegistry must not be null");
         this.callingUidProvider = callingUidProvider;
         this.isExternalCall = isExternalCall;
     }
