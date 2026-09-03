@@ -34,9 +34,21 @@ It can answer questions such as:
 
 ---
 
-## Dependency
+## Quickstart
 
-- coming soon
+Java:
+
+```kotlin
+implementation("io.github.jcodeforge:aipolicy-android:1.0.0")
+annotationProcessor("io.github.jcodeforge:aipolicy-processor:1.0.0")
+```
+
+Kotlin:
+```kotlin
+implementation("io.github.jcodeforge:aipolicy-android:1.0.0")
+ksp("io.github.jcodeforge:aipolicy-processor-ksp:1.0.0")
+```
+
 ---
 
 ## Basic Usage
