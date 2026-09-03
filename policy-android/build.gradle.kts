@@ -4,6 +4,10 @@ plugins {
     alias(libs.plugins.maven.publish)
 }
 
+mavenPublishing {
+    publishToMavenCentral()
+}
+
 android {
     namespace = "io.github.jcodeforge.aipolicy.android"
 
