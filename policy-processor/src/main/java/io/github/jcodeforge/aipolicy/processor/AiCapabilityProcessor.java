@@ -172,8 +172,14 @@ public final class AiCapabilityProcessor extends AbstractProcessor {
                             + ProcessorConstants.CAPABILITY_INDEX_PROVIDER);
 
             try (Writer writer = file.openWriter()) {
-                writer.write(ProcessorConstants.GENERATED_PACKAGE + "." + ProcessorConstants.GENERATED_JAVA_PROVIDER_CLASS
+                writer.write(ProcessorConstants.GENERATED_PACKAGE + "."
+                        + ProcessorConstants.GENERATED_JAVA_PROVIDER_CLASS
                         + "\n");
+
+                writer.write(
+                        ProcessorConstants.GENERATED_PACKAGE + "."
+                                + ProcessorConstants.GENERATED_KSP_PROVIDER_CLASS
+                                + "\n");
             }
 
         } catch (IOException exception) {
