@@ -21,17 +21,9 @@ import java.util.List;
 import java.util.Set;
 
 @SupportedAnnotationTypes(
-        "io.github.jcodeforge.aipolicy.capability.AiCapability"
+        ProcessorConstants.AI_CAPABILITY_ANNOTATION
 )
 public final class AiCapabilityProcessor extends AbstractProcessor {
-
-    private static final String GENERATED_PACKAGE =
-            "io.github.jcodeforge.aipolicy.capability.generated";
-
-    private static final String GENERATED_CLASS = "GeneratedCapabilityIndex";
-
-    private static final String KSP_GENERATED_PROVIDER =
-            "io.github.jcodeforge.aipolicy.generated.GeneratedKspCapabilityIndexProvider";
 
     private final List<Capability> capabilities = new ArrayList<>();
 
@@ -84,17 +76,18 @@ public final class AiCapabilityProcessor extends AbstractProcessor {
         try {
             Filer filer = processingEnv.getFiler();
 
-            JavaFileObject file = filer.createSourceFile(GENERATED_PACKAGE + "."
-                    + GENERATED_CLASS);
+            JavaFileObject file = filer.createSourceFile(
+                    ProcessorConstants.GENERATED_PACKAGE + "." + ProcessorConstants.GENERATED_JAVA_CLASS);
 
             try (Writer writer = file.openWriter()) {
-                writer.write("package " + GENERATED_PACKAGE + ";\n\n");
+                writer.write("package " + ProcessorConstants.GENERATED_PACKAGE + ";\n\n");
                 writer.write("import io.github.jcodeforge.aipolicy.CallerType;\n");
                 writer.write("import io.github.jcodeforge.aipolicy.capability.Capability;\n");
                 writer.write("import io.github.jcodeforge.aipolicy.capability.CapabilityIndex;\n");
                 writer.write("import java.util.Arrays;\n");
                 writer.write("import java.util.List;\n\n");
-                writer.write("public final class " + GENERATED_CLASS + " implements CapabilityIndex {\n\n");
+                writer.write("public final class " + ProcessorConstants.GENERATED_JAVA_CLASS
+                        + " implements CapabilityIndex {\n\n");
                 writer.write("    @Override\n");
                 writer.write("    public List<Capability> getCapabilities() {\n");
 
@@ -134,35 +127,40 @@ public final class AiCapabilityProcessor extends AbstractProcessor {
 
         } catch (IOException exception) {
             processingEnv.getMessager().printMessage(javax.tools.Diagnostic.Kind.ERROR,
-                    "Failed to generate " + GENERATED_CLASS + ": " + exception.getMessage());
+                    "Failed to generate " + ProcessorConstants.GENERATED_JAVA_CLASS + ": "
+                            + exception.getMessage());
         }
     }
 
     private void generateCapabilityIndexProvider() {
         try {
             JavaFileObject file = processingEnv.getFiler().createSourceFile(
-                    GENERATED_PACKAGE + ".GeneratedCapabilityIndexProvider");
+                    ProcessorConstants.GENERATED_PACKAGE + "."
+                            + ProcessorConstants.GENERATED_JAVA_PROVIDER_CLASS);
 
             try (Writer writer = file.openWriter()) {
-                writer.write("package " + GENERATED_PACKAGE + ";\n\n");
+                writer.write("package " + ProcessorConstants.GENERATED_PACKAGE + ";\n\n");
                 writer.write("import io.github.jcodeforge.aipolicy.capability."
                         + "CapabilityIndex;\n");
                 writer.write("import io.github.jcodeforge.aipolicy.capability."
                         + "CapabilityIndexProvider;\n\n");
-
-                writer.write("public final class GeneratedCapabilityIndexProvider "
-                        + "implements CapabilityIndexProvider {\n\n");
-
+                writer.write("public final class "
+                        + ProcessorConstants.GENERATED_JAVA_PROVIDER_CLASS
+                        + " implements CapabilityIndexProvider {\n\n");
                 writer.write("    @Override\n");
                 writer.write("    public CapabilityIndex getCapabilityIndex() {\n");
-                writer.write("        return new GeneratedCapabilityIndex();\n");
+                writer.write("        return new "
+                        + ProcessorConstants.GENERATED_JAVA_CLASS
+                        + "();\n");
                 writer.write("    }\n\n");
                 writer.write("}\n");
             }
 
         } catch (IOException exception) {
             processingEnv.getMessager().printMessage(javax.tools.Diagnostic.Kind.ERROR,
-                    "Failed to generate GeneratedCapabilityIndexProvider: "
+                    "Failed to generate "
+                            + ProcessorConstants.GENERATED_JAVA_PROVIDER_CLASS
+                            + ": "
                             + exception.getMessage());
         }
     }
@@ -171,11 +169,11 @@ public final class AiCapabilityProcessor extends AbstractProcessor {
         try {
             FileObject file = processingEnv.getFiler().createResource(StandardLocation.CLASS_OUTPUT,
                     "", "META-INF/services/"
-                            + "io.github.jcodeforge.aipolicy.capability." + "CapabilityIndexProvider");
+                            + ProcessorConstants.CAPABILITY_INDEX_PROVIDER);
 
             try (Writer writer = file.openWriter()) {
-                writer.write(GENERATED_PACKAGE + ".GeneratedCapabilityIndexProvider\n");
-                writer.write(KSP_GENERATED_PROVIDER + "\n");
+                writer.write(ProcessorConstants.GENERATED_PACKAGE + "." + ProcessorConstants.GENERATED_JAVA_PROVIDER_CLASS
+                        + "\n");
             }
 
         } catch (IOException exception) {

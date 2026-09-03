@@ -16,25 +16,11 @@ import java.util.Iterator;
 import java.util.List;
 import io.github.jcodeforge.aipolicy.CallerType;
 import io.github.jcodeforge.aipolicy.capability.Capability;
+import io.github.jcodeforge.aipolicy.processor.ProcessorConstants;
 import com.google.devtools.ksp.symbol.KSType;
 import com.google.devtools.ksp.symbol.Origin;
 
 public final class AiCapabilitySymbolProcessor implements SymbolProcessor {
-
-    private static final String AI_CAPABILITY_ANNOTATION =
-            "io.github.jcodeforge.aipolicy.capability.AiCapability";
-
-    private static final String GENERATED_PACKAGE =
-            "io.github.jcodeforge.aipolicy.generated";
-
-    private static final String GENERATED_CLASS =
-            "GeneratedCapabilityIndex";
-
-    private static final String GENERATED_PROVIDER_CLASS =
-            "GeneratedKspCapabilityIndexProvider";
-
-    private static final String CAPABILITY_INDEX_PROVIDER =
-            "io.github.jcodeforge.aipolicy.capability.CapabilityIndexProvider";
 
     private final List<Capability> capabilities = new ArrayList<>();
 
@@ -58,7 +44,7 @@ public final class AiCapabilitySymbolProcessor implements SymbolProcessor {
         List<KSAnnotated> deferred = new ArrayList<>();
 
         Iterator<KSAnnotated> iterator = resolver.getSymbolsWithAnnotation(
-                AI_CAPABILITY_ANNOTATION,
+                ProcessorConstants.AI_CAPABILITY_ANNOTATION,
                 false).iterator();
 
         while (iterator.hasNext()) {
@@ -93,17 +79,18 @@ public final class AiCapabilitySymbolProcessor implements SymbolProcessor {
         }
 
         try {
-            generateFile(GENERATED_CLASS, generateCapabilityIndex());
-            generateFile(GENERATED_PROVIDER_CLASS, generateCapabilityIndexProvider());
+            generateFile(ProcessorConstants.GENERATED_KSP_CLASS, generateCapabilityIndex());
+            generateFile(ProcessorConstants.GENERATED_KSP_PROVIDER_CLASS, generateCapabilityIndexProvider());
 
         } catch (Exception e) {
-            throw new IllegalStateException("Failed to generate " + GENERATED_CLASS, e);
+            throw new IllegalStateException("Failed to generate "
+                    + ProcessorConstants.GENERATED_KSP_CLASS, e);
         }
     }
 
     private void generateFile(String className, String source) throws Exception {
         OutputStream output = codeGenerator.createNewFile(new Dependencies(false),
-                GENERATED_PACKAGE, className, "java");
+                ProcessorConstants.GENERATED_PACKAGE, className, "java");
 
         try {
             output.write(source.getBytes(StandardCharsets.UTF_8));
@@ -175,21 +162,21 @@ public final class AiCapabilitySymbolProcessor implements SymbolProcessor {
     private String generateCapabilityIndexProvider() {
         StringBuilder source = new StringBuilder();
 
-        source.append("package ").append(GENERATED_PACKAGE).append(";\n\n");
+        source.append("package ").append(ProcessorConstants.GENERATED_PACKAGE).append(";\n\n");
 
         source.append("import ")
-                .append(CAPABILITY_INDEX_PROVIDER)
+                .append(ProcessorConstants.CAPABILITY_INDEX_PROVIDER)
                 .append(";\n");
 
         source.append("import io.github.jcodeforge.aipolicy.capability.CapabilityIndex;\n\n");
 
         source.append("public final class ")
-                .append(GENERATED_PROVIDER_CLASS)
+                .append(ProcessorConstants.GENERATED_KSP_PROVIDER_CLASS)
                 .append(" implements CapabilityIndexProvider {\n\n");
 
         source.append("    @Override\n");
         source.append("    public CapabilityIndex getCapabilityIndex() {\n");
-        source.append("        return new ").append(GENERATED_CLASS).append("();\n");
+        source.append("        return new ").append(ProcessorConstants.GENERATED_KSP_CLASS).append("();\n");
         source.append("    }\n");
         source.append("}\n");
 
@@ -200,7 +187,7 @@ public final class AiCapabilitySymbolProcessor implements SymbolProcessor {
         StringBuilder source = new StringBuilder();
 
         source.append("package ")
-                .append(GENERATED_PACKAGE)
+                .append(ProcessorConstants.GENERATED_PACKAGE)
                 .append(";\n\n");
 
         source.append("import io.github.jcodeforge.aipolicy.CallerType;\n");
@@ -209,7 +196,7 @@ public final class AiCapabilitySymbolProcessor implements SymbolProcessor {
         source.append("import java.util.List;\n\n");
 
         source.append("public final class ")
-                .append(GENERATED_CLASS)
+                .append(ProcessorConstants.GENERATED_KSP_CLASS)
                 .append(" implements CapabilityIndex {\n\n");
 
         source.append("    @Override\n");
@@ -259,7 +246,7 @@ public final class AiCapabilitySymbolProcessor implements SymbolProcessor {
         while (iterator.hasNext()) {
             KSAnnotation annotation = iterator.next();
 
-            if (AI_CAPABILITY_ANNOTATION.equals(
+            if (ProcessorConstants.AI_CAPABILITY_ANNOTATION.equals(
                     annotation.getAnnotationType()
                             .resolve()
                             .getDeclaration()

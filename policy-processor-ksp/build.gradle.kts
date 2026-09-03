@@ -9,6 +9,7 @@ java {
 
 dependencies {
     implementation(project(":policy-core"))
+    implementation(project(":policy-processor"))
     implementation(libs.symbol.processing.api)
 
     testImplementation(libs.junit)
