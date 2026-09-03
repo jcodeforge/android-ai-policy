@@ -60,16 +60,3 @@ subprojects {
         }
     }
 }
-
-gradle.projectsEvaluated {
-    tasks.register("publishToMavenCentral") {
-        group = "publishing"
-        description = "Publishes all libraries to Maven Central"
-
-        dependsOn(
-            subprojects.map { subproject ->
-                subproject.tasks.named("publishToMavenCentral")
-            }
-        )
-    }
-}
